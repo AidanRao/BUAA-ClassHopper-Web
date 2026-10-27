@@ -1,0 +1,7 @@
+output/
+coverage/
+.playwright-cli/
+.cloudflare/
+.wrangler/
+.env*
+!.env.example
