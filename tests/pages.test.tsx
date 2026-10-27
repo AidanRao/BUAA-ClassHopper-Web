@@ -77,10 +77,14 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
-function mount(path: string, phase: SessionState["phase"] = "ready") {
+function mount(
+  path: string,
+  phase: SessionState["phase"] = "ready",
+  profile: SessionState["profile"] = { id: "user-1" },
+) {
   const state: SessionState = {
     phase,
-    profile: phase === "ready" ? { id: "user-1" } : null,
+    profile: phase === "ready" ? profile : null,
     error: null,
   };
   const session = {
@@ -105,6 +109,24 @@ function mount(path: string, phase: SessionState["phase"] = "ready") {
   );
 }
 describe("mobile routes and course interactions", () => {
+  it("uses the SSO avatar_url field and falls back when an image cannot load", () => {
+    mount("/account", "ready", {
+      id: "user-1",
+      username: "同学",
+      avatar_url: "https://images.example.com/avatar.jpg",
+    });
+    const avatar = screen.getByRole("img", { name: "用户头像" });
+    expect(avatar.getAttribute("src")).toBe(
+      "https://images.example.com/avatar.jpg",
+    );
+    fireEvent.error(avatar);
+    expect(screen.queryByRole("img", { name: "用户头像" })).toBeNull();
+    expect(document.querySelector(".profile-avatar svg")).toBeTruthy();
+    cleanup();
+    mount("/account", "ready", { id: "user-2", avatar_url: null });
+    expect(screen.queryByRole("img", { name: "用户头像" })).toBeNull();
+    expect(document.querySelector(".profile-avatar svg")).toBeTruthy();
+  });
   it("renders upstream rows independently with sign states instead of period numbers", async () => {
     mount("/schedule/2026-10-27");
     await waitFor(() =>

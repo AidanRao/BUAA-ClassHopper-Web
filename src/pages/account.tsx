@@ -9,6 +9,25 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { Failure, LoadingRows } from "@/components/feedback";
 import { useAuthorization } from "./schedule";
+function ProfileAvatar({ src }: { src?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="profile-avatar">
+      {src && !failed ? (
+        <img
+          src={src}
+          alt="用户头像"
+          width={48}
+          height={48}
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <UserRound size={24} aria-hidden="true" />
+      )}
+    </div>
+  );
+}
 export function AccountPage() {
   const session = useSession(),
     authorization = useAuthorization(),
@@ -37,9 +56,10 @@ export function AccountPage() {
   return (
     <div className="account-page">
       <section className="profile">
-        <div className="profile-avatar">
-          <UserRound size={24} />
-        </div>
+        <ProfileAvatar
+          key={`${session.profile?.id ?? "guest"}:${session.profile?.avatar_url ?? ""}`}
+          src={session.profile?.avatar_url}
+        />
         <div className="min-w-0">
           <h1 className="break-words text-lg font-semibold">
             {session.profile?.username || session.profile?.name || "尚未登录"}

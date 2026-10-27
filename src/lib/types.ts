@@ -44,5 +44,5 @@ export interface Profile {
   username?: string;
   name?: string;
   email?: string;
-  avatar?: string;
+  avatar_url?: string | null;
 }
