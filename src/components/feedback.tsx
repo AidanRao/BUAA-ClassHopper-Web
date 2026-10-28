@@ -76,7 +76,7 @@ export function LoginPrompt() {
         <Link
           to={`/app/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
         >
-          使用 SSO 登录
+          去登录
         </Link>
       </Button>
     </Message>

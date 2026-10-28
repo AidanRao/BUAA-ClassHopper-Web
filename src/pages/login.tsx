@@ -28,7 +28,7 @@ export function LoginPage() {
     begin();
   }, [session.phase, navigate, returnTo, begin]);
   return (
-    <Message title={error ? "登录未完成" : "正在前往 SSO…"}>
+    <Message title={error ? "登录未完成" : "正在前往 统一身份认证…"}>
       {error && (
         <>
           <p className="w-full text-sm text-destructive" role="alert">

@@ -57,7 +57,7 @@ export function AccountPage() {
       </section>
       {session.phase === "guest" ? (
         <Button className="w-full" asChild>
-          <Link to="/app/login?returnTo=%2Fapp%2Faccount">使用 SSO 登录</Link>
+          <Link to="/app/login?returnTo=%2Fapp%2Faccount">去登录</Link>
         </Button>
       ) : (
         <>

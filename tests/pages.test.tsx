@@ -139,7 +139,7 @@ describe("mobile routes and course interactions", () => {
       .toBe("/app/announcements");
     expect(screen.getByRole("link", { name: "我的" }).getAttribute("href"))
       .toBe("/app/account");
-    expect(screen.getByRole("link", { name: "使用 SSO 登录" }).getAttribute("href"))
+    expect(screen.getByRole("link", { name: "去登录" }).getAttribute("href"))
       .toMatch(/^\/app\/login\?returnTo=%2Fapp%2Fschedule%2F/);
   });
   it("keeps announcement details and the back link under /app", async () => {
@@ -160,12 +160,12 @@ describe("mobile routes and course interactions", () => {
   });
   it("starts SSO once after clicking account login and preserves the return path", async () => {
     mount("/app/account", "guest");
-    fireEvent.click(screen.getByRole("link", { name: "使用 SSO 登录" }));
+    fireEvent.click(screen.getByRole("link", { name: "去登录" }));
     await waitFor(() =>
       expect(beginLogin).toHaveBeenCalledExactlyOnceWith("/app/account"),
     );
-    expect(screen.getByText("正在前往 SSO…")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "使用 SSO 登录" })).toBeNull();
+    expect(screen.getByText("正在前往 统一身份认证…")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "去登录" })).toBeNull();
   });
   it("starts SSO automatically for direct login links under Strict Mode", async () => {
     mount("/app/login?returnTo=%2Fapp%2Fschedule%2F2026-10-27%2Fone", "guest");
@@ -266,7 +266,7 @@ describe("mobile routes and course interactions", () => {
   it("shows login and App authorization prompts without a loginName input", async () => {
     mount("/app/schedule/2026-10-27", "guest");
     expect(
-      screen.getByRole("link", { name: "使用 SSO 登录" }).getAttribute("href"),
+      screen.getByRole("link", { name: "去登录" }).getAttribute("href"),
     ).toContain("returnTo=");
     cleanup();
     authorized = false;
