@@ -50,27 +50,15 @@ function Layout() {
   }, [location.pathname, title]);
   return (
     <div className="app-shell">
-      <header className="page-header">
-        {detail || announcement ? (
-          <>
-            <Button variant="ghost" size="icon" asChild>
-              <Link to={back} aria-label="返回">
-                <ArrowLeft size={20} />
-              </Link>
-            </Button>
-            <span className="text-sm font-medium">{title}</span>
-          </>
-        ) : (
-          <span className="text-lg font-semibold">{title}</span>
-        )}
-        <img
-          className="brand"
-          src="/icons/buaa-classhopper.jpeg"
-          alt="ClassHopper"
-          width={32}
-          height={32}
-        />
-      </header>
+      {(detail || announcement) && (
+        <div className="detail-navigation">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={back} aria-label="返回">
+              <ArrowLeft size={20} />
+            </Link>
+          </Button>
+        </div>
+      )}
       <main id="main">
         <Suspense
           fallback={
