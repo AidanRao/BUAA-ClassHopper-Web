@@ -109,6 +109,10 @@ export class BrowserSession {
     this.publish({ phase: "guest", profile: null, error: null });
     if (broadcast) this.channel?.postMessage({ type: "logout" });
   };
+  logout = () => {
+    this.clear();
+    location.assign(new URL("/logout", this.config.ssoIssuer).toString());
+  };
   initialize(): Promise<void> {
     if (!this.initialized) this.initialized = this.restore();
     return this.initialized;

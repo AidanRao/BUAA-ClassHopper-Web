@@ -27,6 +27,7 @@ const course = {
 };
 let authorized: boolean, signed: boolean;
 const beginLogin = vi.fn<BrowserSession["begin"]>();
+const logout = vi.fn<BrowserSession["logout"]>();
 const posts: Record<string, unknown>[] = [];
 beforeEach(() => {
   sessionStorage.clear();
@@ -34,6 +35,7 @@ beforeEach(() => {
   signed = false;
   posts.length = 0;
   beginLogin.mockReset().mockResolvedValue(undefined);
+  logout.mockReset();
   vi.stubGlobal("scrollTo", vi.fn());
   vi.stubGlobal(
     "fetch",
@@ -94,6 +96,7 @@ function mount(
     snapshot: () => state,
     token: async () => "user-token",
     clear: vi.fn(),
+    logout,
     begin: beginLogin,
   } as unknown as BrowserSession;
   const query = new QueryClient({
@@ -112,6 +115,11 @@ function mount(
   );
 }
 describe("mobile routes and course interactions", () => {
+  it("uses SSO logout from the account page", () => {
+    mount("/app/account");
+    fireEvent.click(screen.getByRole("button", { name: "退出登录" }));
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
   it("reserves the root for the public page without the application navigation", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>

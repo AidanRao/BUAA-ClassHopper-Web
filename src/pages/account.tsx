@@ -80,7 +80,7 @@ export function AccountPage() {
           <Button
             variant="ghost"
             className="mt-6 w-full"
-            onClick={() => session.manager.clear()}
+            onClick={() => session.manager.logout()}
           >
             <LogOut size={16} />
             退出登录

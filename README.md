@@ -36,7 +36,7 @@ npm run dev
 - `/app/login`：自动前往 SSO，登录后返回 `/app` 内的原页面。
 - `/oauth/callback`：保留已登记的 PKCE 回调地址，完成一次性回调校验。
 
-登录需要浏览器支持 Web Crypto、Web Locks、localStorage 和 sessionStorage，跨标签页状态通过 BroadcastChannel 同步。Access Token 只放内存；Refresh Token 存在 `classhopper.session.v1`，会串行轮换；state、PKCE verifier 和站内返回地址只放 sessionStorage。明确拒绝刷新时退出，网络故障保留 Refresh Token。退出本站会清除用户缓存，不同时撤销 iClass 授权或退出其他 SSO 应用。
+登录需要浏览器支持 Web Crypto、Web Locks、localStorage 和 sessionStorage，跨标签页状态通过 BroadcastChannel 同步。Access Token 只放内存；Refresh Token 存在 `classhopper.session.v1`，会串行轮换；state、PKCE verifier 和站内返回地址只放 sessionStorage。明确拒绝刷新时退出，网络故障保留 Refresh Token。点击退出登录时先清除本站凭据和用户缓存，再前往 SSO 的 `/logout` 页面；用户在 SSO 确认退出后，由 SSO 注销全局会话。此流程与 Android 版一致，不撤销 iClass 授权。
 
 App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classhopper/v1/iclass/authorization`，body 为 `{ loginName }`，身份取 SSO JWT sub。Web 不提供输入 loginName 的入口。授权凭据在 **API Platform KV 内直接保存**，不会返回 Web；KV 更新与撤销存在跨节点传播延迟。
 

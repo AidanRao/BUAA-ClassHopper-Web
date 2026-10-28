@@ -48,6 +48,38 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("persistent PKCE session", () => {
+  it("clears local credentials and user caches before opening SSO logout", async () => {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({ refreshToken: "old-refresh", subject: "user-1" }),
+    );
+    sessionStorage.setItem("classhopper.oauth.v1", "pending-login");
+    const session = manager();
+    await session.token();
+    const clearCache = vi.fn();
+    session.onIdentityChange = clearCache;
+    const assign = vi.fn(() => {
+      expect(localStorage.getItem(storageKey)).toBeNull();
+      expect(sessionStorage.getItem("classhopper.oauth.v1")).toBeNull();
+      expect(session.snapshot()).toEqual({
+        phase: "guest",
+        profile: null,
+        error: null,
+      });
+      expect(clearCache).toHaveBeenCalledTimes(1);
+    });
+    vi.stubGlobal("location", { assign });
+    session.logout();
+    expect(assign).toHaveBeenCalledExactlyOnceWith(
+      "https://sso.example.com/logout",
+    );
+  });
+  it("keeps automatic local session clearing from opening SSO logout", () => {
+    const assign = vi.fn();
+    vi.stubGlobal("location", { assign });
+    manager().clear();
+    expect(assign).not.toHaveBeenCalled();
+  });
   it("matches the RFC 7636 S256 vector", async () =>
     expect(
       await pkceChallenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"),
