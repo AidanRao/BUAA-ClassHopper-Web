@@ -87,7 +87,7 @@ describe("Vercel Function gateway", () => {
       route("/api/admin/apps"),
       route("//evil.example.com"),
       route("/app-config", "&__path=/oauth/token"),
-      route("/schedule/2026-10-27"),
+      route("/app/schedule/2026-10-27"),
     ]) {
       const response = await GET(new Request(url));
       expect(response.status).toBe(404);

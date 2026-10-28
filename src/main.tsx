@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App";
 import { BrowserSession } from "./auth/session";
 import { SessionContext } from "./auth/context";
+import { HomePage } from "./pages/home";
 import type { PublicConfig } from "./lib/types";
 import "./styles.css";
 const root = createRoot(document.getElementById("root")!);
@@ -44,19 +45,23 @@ async function start() {
     </StrictMode>,
   );
 }
-void start().catch((error: unknown) =>
-  root.render(
-    <div className="message">
-      <h1 className="text-lg">暂时无法打开</h1>
-      <p className="mt-3 text-sm text-muted-foreground">
-        {error instanceof Error ? error.message : "请刷新页面重试"}
-      </p>
-      <button
-        className="mt-5 text-sm text-primary"
-        onClick={() => location.reload()}
-      >
-        刷新页面
-      </button>
-    </div>,
-  ),
-);
+if (location.pathname === "/") {
+  root.render(<HomePage />);
+} else {
+  void start().catch((error: unknown) =>
+    root.render(
+      <div className="message">
+        <h1 className="text-lg">暂时无法打开</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : "请刷新页面重试"}
+        </p>
+        <button
+          className="mt-5 text-sm text-primary"
+          onClick={() => location.reload()}
+        >
+          刷新页面
+        </button>
+      </div>,
+    ),
+  );
+}

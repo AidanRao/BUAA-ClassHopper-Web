@@ -29,9 +29,12 @@ describe("Vercel platform routing", () => {
   it("keeps page deep links and OAuth callbacks inside the SPA", () => {
     for (const path of [
       "/",
-      "/schedule/2026-10-27/course-123",
-      "/announcements/123",
-      "/account",
+      "/app",
+      "/app/",
+      "/app/login",
+      "/app/schedule/2026-10-27/course-123",
+      "/app/announcements/123",
+      "/app/account",
       "/oauth/callback",
       "/unknown",
     ])

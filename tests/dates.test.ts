@@ -39,17 +39,24 @@ describe("Beijing dates and routing", () => {
     );
   });
   it("keeps local return paths and rejects redirects, control characters and auth loops", () => {
-    expect(safeReturnTo("/schedule/2026-10-27/123?x=1")).toBe(
-      "/schedule/2026-10-27/123?x=1",
+    expect(safeReturnTo("/app/schedule/2026-10-27/123?x=1")).toBe(
+      "/app/schedule/2026-10-27/123?x=1",
     );
     for (const input of [
       "//evil.example",
       "/\\evil.example",
       "https://evil.example",
       "/oauth/callback",
-      "/login",
+      "/app/login",
+      "/app/login?returnTo=/app/account",
+      "/app/oauth/callback",
+      "/",
+      "/account",
+      "/application",
+      "/app/../login",
+      "/app/%2e%2e/account",
       "/\nevil.example",
     ])
-      expect(safeReturnTo(input)).toBe("/schedule");
+      expect(safeReturnTo(input)).toBe("/app/schedule");
   });
 });

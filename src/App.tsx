@@ -26,24 +26,24 @@ const AnnouncementDetailPage = lazy(() =>
 );
 import { AccountPage } from "@/pages/account";
 import { LoginPage, CallbackPage } from "@/pages/login";
+import { HomePage } from "@/pages/home";
 function Layout() {
   const location = useLocation(),
     params = useParams();
-  const detail = /^\/schedule\/[^/]+\/[^/]+$/.test(location.pathname),
-    announcement = /^\/announcements\/.+/.test(location.pathname);
+  const detail = /^\/app\/schedule\/[^/]+\/[^/]+$/.test(location.pathname),
+    announcement = /^\/app\/announcements\/.+/.test(location.pathname);
   const title = detail
     ? "课程详情"
     : announcement
       ? "公告详情"
-      : location.pathname.startsWith("/account")
+      : location.pathname.startsWith("/app/account")
         ? "我的"
-        : location.pathname.startsWith("/announcements")
+        : location.pathname.startsWith("/app/announcements")
           ? "公告"
-          : location.pathname.startsWith("/login") ||
-              location.pathname.startsWith("/oauth")
+          : location.pathname.startsWith("/app/login")
             ? "登录"
             : "课表";
-  const back = detail ? `/schedule/${params.date}` : "/announcements";
+  const back = detail ? `/app/schedule/${params.date}` : "/app/announcements";
   useEffect(() => {
     document.title = `${title} | ClassHopper`;
     window.scrollTo(0, 0);
@@ -84,9 +84,9 @@ function Layout() {
       </main>
       <nav className="bottom-nav" aria-label="主导航">
         {[
-          { to: "/schedule", name: "课表", Icon: CalendarDays },
-          { to: "/announcements", name: "公告", Icon: Megaphone },
-          { to: "/account", name: "我的", Icon: UserRound },
+          { to: "/app/schedule", name: "课表", Icon: CalendarDays },
+          { to: "/app/announcements", name: "公告", Icon: Megaphone },
+          { to: "/app/account", name: "我的", Icon: UserRound },
         ].map(({ to, name, Icon }) => (
           <NavLink key={to} to={to}>
             <Icon size={21} strokeWidth={1.6} />
@@ -100,8 +100,10 @@ function Layout() {
 export function App() {
   return (
     <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Navigate replace to="/schedule" />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/oauth/callback" element={<CallbackPage />} />
+      <Route path="/app" element={<Layout />}>
+        <Route index element={<Navigate replace to="/app/schedule" />} />
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="schedule/:date" element={<SchedulePage />} />
         <Route
@@ -112,18 +114,27 @@ export function App() {
         <Route path="announcements/:id" element={<AnnouncementDetailPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="login" element={<LoginPage />} />
-        <Route path="oauth/callback" element={<CallbackPage />} />
         <Route
           path="*"
           element={
             <Message title="页面不存在">
               <Button asChild>
-                <Link to="/schedule">返回课表</Link>
+                <Link to="/app/schedule">返回课表</Link>
               </Button>
             </Message>
           }
         />
       </Route>
+      <Route
+        path="*"
+        element={
+          <Message title="页面不存在">
+            <Button asChild>
+              <Link to="/app">进入网页版</Link>
+            </Button>
+          </Message>
+        }
+      />
     </Routes>
   );
 }

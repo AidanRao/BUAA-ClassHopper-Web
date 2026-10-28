@@ -70,7 +70,7 @@ describe("fixed upstream same-origin proxy", () => {
         env,
       ))!.status,
     ).toBe(405);
-    expect(await handleProxy(request("/schedule/2026-10-27/123"), env)).toBe(
+    expect(await handleProxy(request("/app/schedule/2026-10-27/123"), env)).toBe(
       null,
     );
   });

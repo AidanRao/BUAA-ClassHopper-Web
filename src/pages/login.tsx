@@ -64,7 +64,7 @@ export function CallbackPage() {
     >
       {error && (
         <Button asChild>
-          <Link to="/login">重新登录</Link>
+          <Link to="/app/login">重新登录</Link>
         </Button>
       )}
     </Message>

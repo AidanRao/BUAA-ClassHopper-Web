@@ -21,7 +21,7 @@ export function CourseDetailPage() {
     return (
       <Message title="日期无效">
         <Button asChild>
-          <Link to="/schedule">返回课表</Link>
+          <Link to="/app/schedule">返回课表</Link>
         </Button>
       </Message>
     );
@@ -118,7 +118,7 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
         description="该课程可能已调整，请返回课表查看。"
       >
         <Button asChild>
-          <Link to={`/schedule/${date}`}>返回课表</Link>
+          <Link to={`/app/schedule/${date}`}>返回课表</Link>
         </Button>
       </Message>
     );

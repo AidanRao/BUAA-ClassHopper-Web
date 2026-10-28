@@ -40,7 +40,7 @@ export function AnnouncementsPage() {
         {query.data.items.map((item) => (
           <li key={item.id}>
             <Link
-              to={`/announcements/${encodeURIComponent(item.id)}`}
+              to={`/app/announcements/${encodeURIComponent(item.id)}`}
               className="announcement-row"
             >
               <div className="min-w-0 flex-1">

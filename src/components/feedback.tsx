@@ -74,7 +74,7 @@ export function LoginPrompt() {
     <Message title="登录后查看课表" icon={<CalendarDays size={24} />}>
       <Button asChild>
         <Link
-          to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+          to={`/app/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
         >
           使用 SSO 登录
         </Link>

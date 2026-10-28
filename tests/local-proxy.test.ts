@@ -42,7 +42,7 @@ describe("local Node HTTP proxy", () => {
   it("keeps deep links in the SPA and reserved API routes in JSON", async () => {
     const origin = await start();
     expect(
-      await (await realFetch(origin + "/schedule/2026-10-27/123")).text(),
+      await (await realFetch(origin + "/app/schedule/2026-10-27/123")).text(),
     ).toBe("SPA fallback");
     const unknown = await realFetch(origin + "/api/admin/apps");
     expect(unknown.status).toBe(404);

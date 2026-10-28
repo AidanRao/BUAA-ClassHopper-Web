@@ -112,34 +112,72 @@ function mount(
   );
 }
 describe("mobile routes and course interactions", () => {
+  it("reserves the root for the public page without the application navigation", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "ClassHopper" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "进入网页版" }).getAttribute("href"))
+      .toBe("/app");
+    expect(screen.queryByRole("navigation", { name: "主导航" })).toBeNull();
+  });
+  it("opens the application at /app and keeps all navigation under that prefix", () => {
+    mount("/app", "guest");
+    expect(screen.getByRole("link", { name: "课表" }).getAttribute("href"))
+      .toBe("/app/schedule");
+    expect(screen.getByRole("link", { name: "公告" }).getAttribute("href"))
+      .toBe("/app/announcements");
+    expect(screen.getByRole("link", { name: "我的" }).getAttribute("href"))
+      .toBe("/app/account");
+    expect(screen.getByRole("link", { name: "使用 SSO 登录" }).getAttribute("href"))
+      .toMatch(/^\/app\/login\?returnTo=%2Fapp%2Fschedule%2F/);
+  });
+  it("keeps announcement details and the back link under /app", async () => {
+    const announcement = { id: "notice", title: "测试公告", content: "公告正文" };
+    vi.mocked(fetch).mockImplementation(async (input) => Response.json({
+      code: 1,
+      data: String(input).includes("/announcement/notice")
+        ? announcement
+        : { items: [announcement], page: 1, pageSize: 10, total: 1 },
+    }));
+    mount("/app/announcements", "guest");
+    const link = await screen.findByRole("link", { name: "测试公告" });
+    expect(link.getAttribute("href")).toBe("/app/announcements/notice");
+    fireEvent.click(link);
+    expect(await screen.findByText("公告正文")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回" }).getAttribute("href"))
+      .toBe("/app/announcements");
+  });
   it("starts SSO once after clicking account login and preserves the return path", async () => {
-    mount("/account", "guest");
+    mount("/app/account", "guest");
     fireEvent.click(screen.getByRole("link", { name: "使用 SSO 登录" }));
     await waitFor(() =>
-      expect(beginLogin).toHaveBeenCalledExactlyOnceWith("/account"),
+      expect(beginLogin).toHaveBeenCalledExactlyOnceWith("/app/account"),
     );
     expect(screen.getByText("正在前往 SSO…")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "使用 SSO 登录" })).toBeNull();
   });
   it("starts SSO automatically for direct login links under Strict Mode", async () => {
-    mount("/login?returnTo=%2Fschedule%2F2026-10-27%2Fone", "guest");
+    mount("/app/login?returnTo=%2Fapp%2Fschedule%2F2026-10-27%2Fone", "guest");
     await waitFor(() =>
       expect(beginLogin).toHaveBeenCalledExactlyOnceWith(
-        "/schedule/2026-10-27/one",
+        "/app/schedule/2026-10-27/one",
       ),
     );
   });
   it("waits for session restoration instead of starting a second login", () => {
-    mount("/login?returnTo=%2Faccount", "loading");
+    mount("/app/login?returnTo=%2Fapp%2Faccount", "loading");
     expect(beginLogin).not.toHaveBeenCalled();
     cleanup();
-    mount("/login?returnTo=%2Faccount", "ready");
+    mount("/app/login?returnTo=%2Fapp%2Faccount", "ready");
     expect(screen.getByText("退出登录")).toBeTruthy();
     expect(beginLogin).not.toHaveBeenCalled();
   });
   it("offers a retry only when automatic SSO navigation fails", async () => {
     beginLogin.mockRejectedValueOnce(new Error("无法打开登录页面"));
-    mount("/login?returnTo=%2Faccount", "guest");
+    mount("/app/login?returnTo=%2Fapp%2Faccount", "guest");
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
       "无法打开登录页面",
@@ -151,7 +189,7 @@ describe("mobile routes and course interactions", () => {
     expect(screen.queryByRole("button", { name: "重试" })).toBeNull();
   });
   it("uses the SSO avatar_url field and falls back when an image cannot load", () => {
-    mount("/account", "ready", {
+    mount("/app/account", "ready", {
       id: "user-1",
       username: "同学",
       avatar_url: "https://images.example.com/avatar.jpg",
@@ -164,12 +202,12 @@ describe("mobile routes and course interactions", () => {
     expect(screen.queryByRole("img", { name: "用户头像" })).toBeNull();
     expect(document.querySelector(".profile-avatar svg")).toBeTruthy();
     cleanup();
-    mount("/account", "ready", { id: "user-2", avatar_url: null });
+    mount("/app/account", "ready", { id: "user-2", avatar_url: null });
     expect(screen.queryByRole("img", { name: "用户头像" })).toBeNull();
     expect(document.querySelector(".profile-avatar svg")).toBeTruthy();
   });
   it("renders upstream rows independently with sign states instead of period numbers", async () => {
-    mount("/schedule/2026-10-27");
+    mount("/app/schedule/2026-10-27");
     await waitFor(() =>
       expect(screen.getAllByText("矩阵理论与应用")).toHaveLength(2),
     );
@@ -195,11 +233,11 @@ describe("mobile routes and course interactions", () => {
     vi.stubGlobal("cancelAnimationFrame", (id: number) =>
       window.clearTimeout(id),
     );
-    mount("/schedule/2026-10-27");
+    mount("/app/schedule/2026-10-27");
     await waitFor(() => expect(window.scrollTo).toHaveBeenCalledWith(0, 120));
   });
   it("opens a direct detail route and only retries sign-in after confirmation", async () => {
-    mount("/schedule/2026-10-27/one");
+    mount("/app/schedule/2026-10-27/one");
     fireEvent.click(await screen.findByRole("button", { name: "立即签到" }));
     const confirm = await screen.findByRole("button", { name: "仍要签到" });
     expect(posts).toHaveLength(1);
@@ -215,24 +253,24 @@ describe("mobile routes and course interactions", () => {
     ]);
     expect(
       screen.getByRole("link", { name: "返回" }).getAttribute("href"),
-    ).toBe("/schedule/2026-10-27");
+    ).toBe("/app/schedule/2026-10-27");
   });
   it("shows login and App authorization prompts without a loginName input", async () => {
-    mount("/schedule/2026-10-27", "guest");
+    mount("/app/schedule/2026-10-27", "guest");
     expect(
       screen.getByRole("link", { name: "使用 SSO 登录" }).getAttribute("href"),
     ).toContain("returnTo=");
     cleanup();
     authorized = false;
-    mount("/schedule/2026-10-27");
+    mount("/app/schedule/2026-10-27");
     expect(await screen.findByText("请在 App 内完成授权")).toBeTruthy();
     expect(screen.queryByRole("textbox")).toBeNull();
   });
   it("handles invalid dates and missing courses on direct navigation", async () => {
-    mount("/schedule/2026-02-30");
+    mount("/app/schedule/2026-02-30");
     expect(screen.getByText("日期无效")).toBeTruthy();
     cleanup();
-    mount("/schedule/2026-10-27/missing");
+    mount("/app/schedule/2026-10-27/missing");
     expect(await screen.findByText("课程不存在")).toBeTruthy();
   });
 });

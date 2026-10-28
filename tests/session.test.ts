@@ -138,7 +138,7 @@ describe("persistent PKCE session", () => {
           state: "state",
           verifier: "verifier",
           startedAt: Date.now(),
-          returnTo: "/account",
+          returnTo: "/app/account",
         }),
       );
       await expect(manager().complete(search)).rejects.toThrow("登录校验失败");
@@ -149,7 +149,7 @@ describe("persistent PKCE session", () => {
         state: "state",
         verifier: "verifier",
         startedAt: Date.now() - 600001,
-        returnTo: "/account",
+        returnTo: "/app/account",
       }),
     );
     await expect(manager().complete("?state=state&code=one")).rejects.toThrow();
@@ -162,16 +162,16 @@ describe("persistent PKCE session", () => {
         state: "state",
         verifier: "verifier",
         startedAt: Date.now(),
-        returnTo: "/schedule/2026-10-27/123",
+        returnTo: "/app/schedule/2026-10-27/123",
       }),
     );
     const session = manager();
     expect(await session.complete("?state=state&code=one")).toBe(
-      "/schedule/2026-10-27/123",
+      "/app/schedule/2026-10-27/123",
     );
     expect(sessionStorage.getItem("classhopper.oauth.v1")).toBeNull();
     expect(await session.complete("?state=state&code=one")).toBe(
-      "/schedule/2026-10-27/123",
+      "/app/schedule/2026-10-27/123",
     );
     expect(fetch).toHaveBeenCalledTimes(2);
   });

@@ -52,10 +52,11 @@ export function safeReturnTo(value: string | null | undefined): string {
     value.startsWith("//") ||
     /[\\\u0000-\u0020]/.test(value)
   )
-    return "/schedule";
+    return "/app/schedule";
   const parsed = new URL(value, "https://local.invalid");
   return parsed.origin === "https://local.invalid" &&
-    !/^\/(?:login|oauth)(?:\/|$)/.test(parsed.pathname)
+    /^\/app(?:\/|$)/.test(parsed.pathname) &&
+    !/^\/app\/(?:login|oauth)(?:\/|$)/.test(parsed.pathname)
     ? parsed.pathname + parsed.search
-    : "/schedule";
+    : "/app/schedule";
 }

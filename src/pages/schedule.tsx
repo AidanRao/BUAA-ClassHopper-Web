@@ -36,12 +36,12 @@ export function useAuthorization() {
 export function SchedulePage() {
   const { date = "" } = useParams();
   const navigate = useNavigate();
-  if (!date) return <Navigate replace to={`/schedule/${today()}`} />;
+  if (!date) return <Navigate replace to={`/app/schedule/${today()}`} />;
   if (!validDate(date))
     return (
       <Message title="日期无效">
         <Button asChild>
-          <Link to="/schedule">返回今天</Link>
+          <Link to="/app/schedule">返回今天</Link>
         </Button>
       </Message>
     );
@@ -49,7 +49,7 @@ export function SchedulePage() {
     <>
       <WeekCalendar
         date={date}
-        select={(next) => navigate(`/schedule/${next}`)}
+        select={(next) => navigate(`/app/schedule/${next}`)}
       />
       <Banner />
       <SessionGate>
@@ -150,7 +150,7 @@ function DaySchedule({ date }: { date: string }) {
           <li key={course.courseScheduleId}>
             <Link
               className="course-row"
-              to={`/schedule/${date}/${encodeURIComponent(course.courseScheduleId)}`}
+              to={`/app/schedule/${date}/${encodeURIComponent(course.courseScheduleId)}`}
               onClick={() =>
                 sessionStorage.setItem(
                   `schedule-scroll:${date}`,
