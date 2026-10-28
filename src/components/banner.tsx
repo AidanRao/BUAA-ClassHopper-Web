@@ -23,25 +23,32 @@ export function Banner() {
   const image = httpUrl(item?.content.imageUrl);
   if (!item || !image || failed === image) return null;
   const media = (
-    <img
-      src={image}
-      alt={item.content.title || "广告"}
-      className="banner-image"
-      onError={() => setFailed(image)}
-      referrerPolicy="no-referrer"
-    />
+    <>
+      <img
+        src={image}
+        alt={item.content.title || "广告"}
+        className="banner-image"
+        onError={() => setFailed(image)}
+        referrerPolicy="no-referrer"
+      />
+      <span className="ad-label">广告</span>
+    </>
   );
   const target = httpUrl(item.targetUrl);
   return (
     <aside className="banner" aria-label="广告">
       {target ? (
-        <a href={target} target="_blank" rel="noopener noreferrer">
+        <a
+          className="banner-surface"
+          href={target}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {media}
         </a>
       ) : (
-        media
+        <div className="banner-surface">{media}</div>
       )}
-      <span className="ad-label">广告</span>
     </aside>
   );
 }

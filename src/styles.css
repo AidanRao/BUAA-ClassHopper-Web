@@ -239,27 +239,39 @@
   margin-right: 2px;
 }
 .banner {
-  margin: 16px 16px 0;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 12px auto 0;
+}
+.banner-surface {
+  display: block;
   position: relative;
+  padding: 4px;
+  border: 0.5px solid var(--gray-6);
+  border-radius: 6px;
+  background: var(--gray-2);
 }
 .banner-image {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
-  max-height: 160px;
+  max-height: 112px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 .ad-label {
   position: absolute;
-  bottom: 5px;
-  right: 7px;
-  color: var(--gray-12);
-  background: var(--gray-2);
+  bottom: 8px;
+  right: 8px;
+  color: var(--gray-11);
+  background: var(--gray-1);
   border: 0.5px solid var(--gray-6);
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 0 3px;
+  border-radius: 2px;
   font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
 }
 .message {
   min-height: 300px;
