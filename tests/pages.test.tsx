@@ -26,12 +26,14 @@ const course = {
   classEndTime: "2026-10-27 10:35:00",
 };
 let authorized: boolean, signed: boolean;
+const beginLogin = vi.fn<BrowserSession["begin"]>();
 const posts: Record<string, unknown>[] = [];
 beforeEach(() => {
   sessionStorage.clear();
   authorized = true;
   signed = false;
   posts.length = 0;
+  beginLogin.mockReset().mockResolvedValue(undefined);
   vi.stubGlobal("scrollTo", vi.fn());
   vi.stubGlobal(
     "fetch",
@@ -92,6 +94,7 @@ function mount(
     snapshot: () => state,
     token: async () => "user-token",
     clear: vi.fn(),
+    begin: beginLogin,
   } as unknown as BrowserSession;
   const query = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -109,6 +112,44 @@ function mount(
   );
 }
 describe("mobile routes and course interactions", () => {
+  it("starts SSO once after clicking account login and preserves the return path", async () => {
+    mount("/account", "guest");
+    fireEvent.click(screen.getByRole("link", { name: "使用 SSO 登录" }));
+    await waitFor(() =>
+      expect(beginLogin).toHaveBeenCalledExactlyOnceWith("/account"),
+    );
+    expect(screen.getByText("正在前往 SSO…")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "使用 SSO 登录" })).toBeNull();
+  });
+  it("starts SSO automatically for direct login links under Strict Mode", async () => {
+    mount("/login?returnTo=%2Fschedule%2F2026-10-27%2Fone", "guest");
+    await waitFor(() =>
+      expect(beginLogin).toHaveBeenCalledExactlyOnceWith(
+        "/schedule/2026-10-27/one",
+      ),
+    );
+  });
+  it("waits for session restoration instead of starting a second login", () => {
+    mount("/login?returnTo=%2Faccount", "loading");
+    expect(beginLogin).not.toHaveBeenCalled();
+    cleanup();
+    mount("/login?returnTo=%2Faccount", "ready");
+    expect(screen.getByText("退出登录")).toBeTruthy();
+    expect(beginLogin).not.toHaveBeenCalled();
+  });
+  it("offers a retry only when automatic SSO navigation fails", async () => {
+    beginLogin.mockRejectedValueOnce(new Error("无法打开登录页面"));
+    mount("/login?returnTo=%2Faccount", "guest");
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "无法打开登录页面",
+    );
+    expect(beginLogin).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "重试" }));
+    await waitFor(() => expect(beginLogin).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("button", { name: "重试" })).toBeNull();
+  });
   it("uses the SSO avatar_url field and falls back when an image cannot load", () => {
     mount("/account", "ready", {
       id: "user-1",

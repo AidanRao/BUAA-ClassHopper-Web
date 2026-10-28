@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSession } from "@/auth/context";
 import { safeReturnTo } from "@/lib/dates";
@@ -9,33 +9,34 @@ export function LoginPage() {
     [params] = useSearchParams(),
     navigate = useNavigate();
   const [error, setError] = useState<string | null>(null),
-    [pending, setPending] = useState(false);
+    started = useRef(false);
   const returnTo = safeReturnTo(params.get("returnTo"));
+  const begin = useCallback(() => {
+    setError(null);
+    void session.manager.begin(returnTo).catch((error: unknown) => {
+      setError(error instanceof Error ? error.message : "无法打开登录页面");
+    });
+  }, [session.manager, returnTo]);
   useEffect(() => {
-    if (session.phase === "ready") navigate(returnTo, { replace: true });
-  }, [session.phase, navigate, returnTo]);
+    if (session.phase === "loading") return;
+    if (session.phase === "ready") {
+      navigate(returnTo, { replace: true });
+      return;
+    }
+    if (started.current) return;
+    started.current = true;
+    begin();
+  }, [session.phase, navigate, returnTo, begin]);
   return (
-    <Message title="登录 ClassHopper" description="使用你的 SSO 账号继续。">
+    <Message title={error ? "登录未完成" : "正在前往 SSO…"}>
       {error && (
-        <p className="w-full text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <>
+          <p className="w-full text-sm text-destructive" role="alert">
+            {error}
+          </p>
+          <Button onClick={begin}>重试</Button>
+        </>
       )}
-      <Button
-        disabled={pending}
-        onClick={() => {
-          setError(null);
-          setPending(true);
-          void session.manager.begin(returnTo).catch((error: unknown) => {
-            setError(
-              error instanceof Error ? error.message : "无法打开登录页面",
-            );
-            setPending(false);
-          });
-        }}
-      >
-        {pending ? "正在前往 SSO…" : "使用 SSO 登录"}
-      </Button>
     </Message>
   );
 }
