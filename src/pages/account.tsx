@@ -72,8 +72,8 @@ export function AccountPage() {
               <p className="flex items-center gap-2 text-sm">
                 <ShieldCheck size={18} aria-hidden="true" />
                 {authorization.data?.authorized
-                  ? "iClass 已授权"
-                  : "请在 App 内完成 iClass 授权"}
+                  ? "已完成授权"
+                  : "请在 App 内完成授权"}
               </p>
             )}
           </section>
