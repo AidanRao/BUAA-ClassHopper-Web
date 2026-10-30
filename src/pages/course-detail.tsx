@@ -126,10 +126,12 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
   const signed = course.signStatus === 1;
   return (
     <article className="detail-page">
-      <CourseStatus course={course} variant="detail" />
-      <h1 className="mt-3 break-words text-lg font-semibold leading-7">
-        {course.courseName}
-      </h1>
+      <div className="detail-heading">
+        <h1 className="min-w-0 break-words text-lg font-semibold leading-7">
+          {course.courseName}
+        </h1>
+        <CourseStatus course={course} variant="detail" />
+      </div>
       <dl className="detail-fields">
         <div>
           <dt>日期</dt>
@@ -170,16 +172,6 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
         }}
       >
         {signed ? "已签到" : mutation.isPending ? "正在签到…" : "立即签到"}
-      </Button>
-      <Button
-        className="mt-2 w-full"
-        variant="ghost"
-        disabled={mutation.isPending || query.isFetching}
-        onClick={() => {
-          void query.refetch();
-        }}
-      >
-        刷新状态
       </Button>
       <ConfirmDialog
         open={confirm}

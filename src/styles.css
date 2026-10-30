@@ -286,10 +286,18 @@
 .detail-page {
   padding: 24px 24px 32px;
 }
+.detail-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+}
 .detail-status {
   display: flex;
   align-items: center;
+  min-height: 28px;
   gap: 5px;
+  white-space: nowrap;
   color: var(--gray-11);
   font-size: 12px;
 }
