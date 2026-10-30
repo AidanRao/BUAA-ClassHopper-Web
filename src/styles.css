@@ -183,6 +183,12 @@
   border-bottom: 0.5px solid var(--gray-6);
 }
 .course-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   min-height: 154px;
   display: flex;
   align-items: center;
@@ -442,7 +448,7 @@
 }
 .dialog-content {
   position: fixed;
-  z-index: 50;
+  z-index: 70;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -465,6 +471,35 @@
   border-radius: 14px 14px 0 0;
   border: 1px solid var(--gray-6);
   background: var(--gray-1);
+}
+.confirmation-overlay {
+  z-index: 60;
+}
+.course-sheet {
+  display: flex;
+  flex-direction: column;
+  height: 60vh;
+  height: 60dvh;
+}
+.course-sheet .sheet-heading {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+.course-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.course-sheet .detail-fields {
+  margin: 0;
+}
+.course-sheet .detail-fields > div {
+  padding: 12px 0;
+}
+.course-sheet-actions {
+  flex-shrink: 0;
+  padding-top: 16px;
 }
 .date-input {
   display: block;

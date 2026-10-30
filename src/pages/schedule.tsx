@@ -1,12 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { CourseStatus } from "@/components/course-status";
+import { CourseDetailSheet } from "@/components/course-detail-sheet";
 import { useSession } from "@/auth/context";
 import { api, ApiError } from "@/lib/api";
 import { courseTime, timeLabel, today, validDate } from "@/lib/dates";
-import type { Authorization, Schedule } from "@/lib/types";
+import type { Schedule } from "@/lib/types";
+import { scheduleKey, useAuthorization } from "@/lib/iclass";
 import { WeekCalendar } from "@/components/week-calendar";
 import { Banner } from "@/components/banner";
 import {
@@ -17,23 +19,6 @@ import {
   SessionGate,
 } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
-export const authorizationKey = (id: string) =>
-  ["private", id, "authorization"] as const;
-export const scheduleKey = (id: string, date: string) =>
-  ["private", id, "schedule", date] as const;
-export function useAuthorization() {
-  const session = useSession();
-  return useQuery({
-    queryKey: authorizationKey(session.profile?.id ?? ""),
-    queryFn: ({ signal }) =>
-      api<Authorization>("/v1/iclass/authorization", session.manager, {
-        signal,
-      }),
-    enabled: session.phase === "ready",
-    staleTime: 0,
-    retry: false,
-  });
-}
 export function SchedulePage() {
   const { date = "" } = useParams();
   const navigate = useNavigate();
@@ -54,12 +39,16 @@ export function SchedulePage() {
       />
       <Banner />
       <SessionGate>
-        <DaySchedule date={date} />
+        <DaySchedule key={date} date={date} />
       </SessionGate>
     </>
   );
 }
 function DaySchedule({ date }: { date: string }) {
+  const [selected, setSelected] = useState<{
+    id: string;
+    trigger: HTMLButtonElement;
+  } | null>(null);
   const { manager, profile } = useSession(),
     authorization = useAuthorization();
   const query = useQuery({
@@ -149,14 +138,12 @@ function DaySchedule({ date }: { date: string }) {
       <ul className="course-list">
         {courses.map((course) => (
           <li key={course.courseScheduleId}>
-            <Link
+            <button
+              type="button"
               className="course-row"
-              to={`/app/schedule/${date}/${encodeURIComponent(course.courseScheduleId)}`}
-              onClick={() =>
-                sessionStorage.setItem(
-                  `schedule-scroll:${date}`,
-                  String(window.scrollY),
-                )
+              aria-haspopup="dialog"
+              onClick={(event) =>
+                setSelected({ id: course.courseScheduleId, trigger: event.currentTarget })
               }
             >
               <CourseStatus course={course} />
@@ -170,7 +157,7 @@ function DaySchedule({ date }: { date: string }) {
                 </p>
               </div>
               <ChevronRight className="course-chevron" size={18} />
-            </Link>
+            </button>
           </li>
         ))}
       </ul>
@@ -185,6 +172,15 @@ function DaySchedule({ date }: { date: string }) {
           {query.isFetching ? "刷新中…" : "刷新课表"}
         </Button>
       </div>
+      {selected && (
+        <CourseDetailSheet
+          key={selected.id}
+          date={date}
+          id={selected.id}
+          onClose={() => setSelected(null)}
+          returnFocusTo={selected.trigger}
+        />
+      )}
     </section>
   );
 }

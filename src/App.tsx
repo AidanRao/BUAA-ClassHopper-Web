@@ -7,13 +7,11 @@ import {
   Route,
   Routes,
   useLocation,
-  useParams,
 } from "react-router";
 import { ArrowLeft, CalendarDays, Megaphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/feedback";
 import { SchedulePage } from "@/pages/schedule";
-import { CourseDetailPage } from "@/pages/course-detail";
 const AnnouncementsPage = lazy(() =>
   import("@/pages/announcements").then((module) => ({
     default: module.AnnouncementsPage,
@@ -28,32 +26,27 @@ import { AccountPage } from "@/pages/account";
 import { LoginPage, CallbackPage } from "@/pages/login";
 import { HomePage } from "@/pages/home";
 function Layout() {
-  const location = useLocation(),
-    params = useParams();
-  const detail = /^\/app\/schedule\/[^/]+\/[^/]+$/.test(location.pathname),
-    announcement = /^\/app\/announcements\/.+/.test(location.pathname);
-  const title = detail
-    ? "课程详情"
-    : announcement
-      ? "公告详情"
-      : location.pathname.startsWith("/app/account")
-        ? "我的"
-        : location.pathname.startsWith("/app/announcements")
-          ? "公告"
-          : location.pathname.startsWith("/app/login")
-            ? "登录"
-            : "课表";
-  const back = detail ? `/app/schedule/${params.date}` : "/app/announcements";
+  const location = useLocation();
+  const announcement = /^\/app\/announcements\/.+/.test(location.pathname);
+  const title = announcement
+    ? "公告详情"
+    : location.pathname.startsWith("/app/account")
+      ? "我的"
+      : location.pathname.startsWith("/app/announcements")
+        ? "公告"
+        : location.pathname.startsWith("/app/login")
+          ? "登录"
+          : "课表";
   useEffect(() => {
     document.title = `${title} | ClassHopper`;
     window.scrollTo(0, 0);
   }, [location.pathname, title]);
   return (
     <div className="app-shell">
-      {(detail || announcement) && (
+      {announcement && (
         <div className="detail-navigation">
           <Button variant="ghost" size="icon" asChild>
-            <Link to={back} aria-label="返回">
+            <Link to="/app/announcements" aria-label="返回">
               <ArrowLeft size={20} />
             </Link>
           </Button>
@@ -94,10 +87,6 @@ export function App() {
         <Route index element={<Navigate replace to="/app/schedule" />} />
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="schedule/:date" element={<SchedulePage />} />
-        <Route
-          path="schedule/:date/:courseScheduleId"
-          element={<CourseDetailPage />}
-        />
         <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="announcements/:id" element={<AnnouncementDetailPage />} />
         <Route path="account" element={<AccountPage />} />

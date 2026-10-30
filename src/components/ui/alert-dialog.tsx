@@ -20,7 +20,7 @@ export function ConfirmDialog({
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="dialog-overlay" />
+        <AlertDialog.Overlay className="dialog-overlay confirmation-overlay" />
         <AlertDialog.Content className="dialog-content">
           <AlertDialog.Title className="text-lg font-semibold">
             {title}

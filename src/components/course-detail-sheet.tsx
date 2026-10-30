@@ -1,38 +1,27 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/auth/context";
 import { api, ApiError } from "@/lib/api";
-import { timeLabel, validDate } from "@/lib/dates";
+import { timeLabel } from "@/lib/dates";
 import type { Schedule } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CourseStatus } from "@/components/course-status";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
+import { Sheet } from "@/components/ui/sheet";
 import {
   AuthorizationPrompt,
   Failure,
   LoadingRows,
   Message,
-  SessionGate,
 } from "@/components/feedback";
-import { scheduleKey, useAuthorization } from "./schedule";
-export function CourseDetailPage() {
-  const { date = "", courseScheduleId = "" } = useParams();
-  if (!validDate(date))
-    return (
-      <Message title="日期无效">
-        <Button asChild>
-          <Link to="/app/schedule">返回课表</Link>
-        </Button>
-      </Message>
-    );
-  return (
-    <SessionGate>
-      <CourseDetail date={date} id={courseScheduleId} />
-    </SessionGate>
-  );
-}
-function CourseDetail({ date, id }: { date: string; id: string }) {
+import { scheduleKey, useAuthorization } from "@/lib/iclass";
+
+export function CourseDetailSheet({ date, id, onClose, returnFocusTo }: {
+  date: string;
+  id: string;
+  onClose: () => void;
+  returnFocusTo: HTMLButtonElement;
+}) {
   const { manager, profile } = useSession();
   const client = useQueryClient();
   const authorization = useAuthorization();
@@ -80,13 +69,44 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
       await client.invalidateQueries({ queryKey: key });
     },
   });
+  const course = query.data?.items.find((item) => item.courseScheduleId === id);
+  const renderSheet = (content: ReactNode, actions?: ReactNode) => (
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={course?.courseName ?? "课程详情"}
+      titleAside={course && <CourseStatus course={course} variant="detail" />}
+      className="course-sheet"
+      closeLabel="关闭课程详情"
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        if (returnFocusTo.isConnected) returnFocusTo.focus({ preventScroll: true });
+      }}
+    >
+      <div className="course-sheet-body">{content}</div>
+      {actions && <div className="course-sheet-actions">{actions}</div>}
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title="当前不在签到时间内"
+        description={course
+          ? `允许签到的时间为课前 10 分钟至课程结束（北京时间）。\n本节课程：${date} ${timeLabel(course.classBeginTime)}–${timeLabel(course.classEndTime)}\n是否仍要尝试签到？`
+          : ""}
+        action="仍要签到"
+        pending={mutation.isPending}
+        onConfirm={() => mutation.mutate(true)}
+      />
+    </Sheet>
+  );
   if (
     authorization.isPending ||
     (authorization.data?.authorized && query.isPending)
   )
-    return <LoadingRows />;
+    return renderSheet(<LoadingRows />);
   if (authorization.error)
-    return (
+    return renderSheet(
       <Failure
         error={authorization.error}
         retry={() => {
@@ -95,7 +115,7 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
       />
     );
   if (!authorization.data?.authorized)
-    return (
+    return renderSheet(
       <AuthorizationPrompt
         refresh={() => {
           void authorization.refetch();
@@ -103,7 +123,7 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
       />
     );
   if (query.error)
-    return (
+    return renderSheet(
       <Failure
         error={query.error}
         retry={() => {
@@ -111,27 +131,18 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
         }}
       />
     );
-  const course = query.data?.items.find((item) => item.courseScheduleId === id);
   if (!course)
-    return (
+    return renderSheet(
       <Message
         title="课程不存在"
         description="该课程可能已调整，请返回课表查看。"
       >
-        <Button asChild>
-          <Link to={`/app/schedule/${date}`}>返回课表</Link>
-        </Button>
+        <Button onClick={onClose}>返回课表</Button>
       </Message>
     );
   const signed = course.signStatus === 1;
-  return (
-    <article className="detail-page">
-      <div className="detail-heading">
-        <h1 className="min-w-0 break-words text-lg font-semibold leading-7">
-          {course.courseName}
-        </h1>
-        <CourseStatus course={course} variant="detail" />
-      </div>
+  return renderSheet(
+    <>
       <dl className="detail-fields">
         <div>
           <dt>日期</dt>
@@ -159,29 +170,20 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
         )}
       </dl>
       {feedback && (
-        <p className="mb-4 text-sm leading-6" role="status">
+        <p className="mt-3 text-sm leading-6" role="status">
           {feedback}
         </p>
       )}
-      <Button
-        className="w-full"
-        disabled={signed || mutation.isPending || query.isFetching}
-        onClick={() => {
-          setFeedback("");
-          mutation.mutate(false);
-        }}
-      >
-        {signed ? "已签到" : mutation.isPending ? "正在签到…" : "立即签到"}
-      </Button>
-      <ConfirmDialog
-        open={confirm}
-        onOpenChange={setConfirm}
-        title="当前不在签到时间内"
-        description={`允许签到的时间为课前 10 分钟至课程结束（北京时间）。\n本节课程：${date} ${timeLabel(course.classBeginTime)}–${timeLabel(course.classEndTime)}\n是否仍要尝试签到？`}
-        action="仍要签到"
-        pending={mutation.isPending}
-        onConfirm={() => mutation.mutate(true)}
-      />
-    </article>
+    </>,
+    <Button
+      className="w-full"
+      disabled={signed || mutation.isPending || query.isFetching}
+      onClick={() => {
+        setFeedback("");
+        mutation.mutate(false);
+      }}
+    >
+      {signed ? "已签到" : mutation.isPending ? "正在签到…" : "立即签到"}
+    </Button>,
   );
 }

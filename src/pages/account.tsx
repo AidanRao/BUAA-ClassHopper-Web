@@ -4,7 +4,7 @@ import { LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useSession } from "@/auth/context";
 import { Button } from "@/components/ui/button";
 import { Failure, LoadingRows } from "@/components/feedback";
-import { useAuthorization } from "./schedule";
+import { useAuthorization } from "@/lib/iclass";
 function ProfileAvatar({ src }: { src?: string | null }) {
   const [failed, setFailed] = useState(false);
   return (

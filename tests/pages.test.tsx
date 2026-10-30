@@ -6,8 +6,9 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "../src/App";
 import { SessionContext } from "../src/auth/context";
@@ -83,6 +84,15 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
+}
+async function openCourse() {
+  const rows = await screen.findAllByRole("button", { name: /矩阵理论与应用/ });
+  fireEvent.click(rows[0]);
+  return screen.findByRole("dialog", { name: "矩阵理论与应用" });
+}
 function mount(
   path: string,
   phase: SessionState["phase"] = "ready",
@@ -110,6 +120,7 @@ function mount(
         <MemoryRouter initialEntries={[path]}>
           <React.StrictMode>
             <App />
+            <LocationProbe />
           </React.StrictMode>
         </MemoryRouter>
       </SessionContext.Provider>
@@ -126,7 +137,8 @@ describe("mobile routes and course interactions", () => {
     it.each(["list", "detail"] as const)("renders the %s status and decorative icon", async (variant) => {
       signed = isSigned;
       reserved = isReserved;
-      mount(`/app/schedule/2026-10-27${variant === "detail" ? "/one" : ""}`);
+      mount("/app/schedule/2026-10-27");
+      if (variant === "detail") await openCourse();
       await screen.findAllByText("矩阵理论与应用");
       const status = document.querySelector(variant === "list" ? ".course-status" : ".detail-status");
       expect(status?.textContent).toBe(label);
@@ -137,7 +149,7 @@ describe("mobile routes and course interactions", () => {
       expect(svg?.getAttribute("height")).toBe("16");
       expect(svg?.getAttribute("aria-hidden")).toBe("true");
       if (variant === "detail" && !isSigned)
-        expect(screen.getByRole("button", { name: "立即签到" }).hasAttribute("disabled")).toBe(false);
+        await waitFor(() => expect(screen.getByRole("button", { name: "立即签到" }).hasAttribute("disabled")).toBe(false));
     });
   });
 
@@ -145,18 +157,89 @@ describe("mobile routes and course interactions", () => {
     reserved = true;
     mount("/app/schedule/2026-10-27");
     const status = await screen.findByText("已预约");
-    fireEvent.click(status.closest("a")!);
+    fireEvent.click(status.closest("button")!);
     const sign = await screen.findByRole("button", { name: "立即签到" });
     await waitFor(() => expect(sign.hasAttribute("disabled")).toBe(false));
     fireEvent.click(sign);
     fireEvent.click(await screen.findByRole("button", { name: "仍要签到" }));
     await waitFor(() => expect(document.querySelector(".detail-status")?.textContent).toBe("已签到"));
     expect(screen.queryByText("已预约")).toBeNull();
-    fireEvent.click(screen.getByRole("link", { name: "返回" }));
+    fireEvent.click(screen.getByRole("button", { name: "关闭课程详情" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await screen.findAllByText("矩阵理论与应用");
     expect(document.querySelector(".course-status")?.textContent).toBe("已签到");
     expect(screen.queryByText("已预约")).toBeNull();
     expect(posts.map((value) => value.allowOutsideWindow)).toEqual([false, true]);
+  });
+
+  it("opens details over the mounted schedule without resetting scroll and restores focus on close", async () => {
+    sessionStorage.setItem("schedule-scroll:2026-10-27", "120");
+    mount("/app/schedule/2026-10-27");
+    const row = (await screen.findAllByRole("button", { name: /未签到 矩阵理论与应用/ }))[0];
+    const list = document.querySelector(".course-list");
+    await waitFor(() => expect(window.scrollTo).toHaveBeenCalledWith(0, 120));
+    vi.mocked(window.scrollTo).mockClear();
+    fireEvent.click(row);
+    const sheet = await screen.findByRole("dialog", { name: "矩阵理论与应用" });
+    expect(screen.getByTestId("location").textContent).toBe("/app/schedule/2026-10-27");
+    expect(within(sheet).getByText("课程编号")).toBeTruthy();
+    expect(within(sheet).queryByRole("button", { name: "刷新状态" })).toBeNull();
+    expect(document.querySelector(".course-list")).toBe(list);
+    expect(list?.isConnected).toBe(true);
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    fireEvent.click(within(sheet).getByRole("button", { name: "关闭课程详情" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(row));
+    expect(screen.getByTestId("location").textContent).toBe("/app/schedule/2026-10-27");
+    expect(window.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("closes a course sheet with Escape and stays on the same schedule URL", async () => {
+    mount("/app/schedule/2026-10-27");
+    await openCourse();
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("region", { name: "当日课程" })).toBeTruthy();
+    expect(document.querySelector(".detail-navigation")).toBeNull();
+    expect(screen.getByTestId("location").textContent).toBe("/app/schedule/2026-10-27");
+  });
+
+  it("cancels the outside-window confirmation without closing the course sheet or retrying sign-in", async () => {
+    mount("/app/schedule/2026-10-27");
+    await openCourse();
+    const sign = await screen.findByRole("button", { name: "立即签到" });
+    await waitFor(() => expect(sign.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(sign);
+    const confirm = await screen.findByRole("alertdialog");
+    expect(posts).toHaveLength(1);
+    fireEvent.click(within(confirm).getByRole("button", { name: "取消" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(screen.getByRole("dialog", { name: "矩阵理论与应用" })).toBeTruthy();
+    expect(posts).toHaveLength(1);
+  });
+
+  it("refreshes the schedule when a pending sign-in finishes after the sheet closes", async () => {
+    const original = vi.mocked(fetch).getMockImplementation()!;
+    let finish: (() => void) | undefined;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (!String(input).includes("sign-ins")) return original(input, init);
+      return new Promise<Response>((resolve) => {
+        finish = () => {
+          signed = true;
+          resolve(Response.json({ code: 1, data: { alreadySigned: false } }));
+        };
+      });
+    });
+    mount("/app/schedule/2026-10-27");
+    await openCourse();
+    const sign = await screen.findByRole("button", { name: "立即签到" });
+    await waitFor(() => expect(sign.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(sign);
+    await waitFor(() => expect(finish).toBeTypeOf("function"));
+    fireEvent.click(screen.getByRole("button", { name: "关闭课程详情" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    finish!();
+    await waitFor(() => expect(document.querySelector(".course-status")?.textContent).toBe("已签到"));
   });
 
   it("uses SSO logout from the account page", () => {
@@ -288,9 +371,12 @@ describe("mobile routes and course interactions", () => {
     mount("/app/schedule/2026-10-27");
     await waitFor(() => expect(window.scrollTo).toHaveBeenCalledWith(0, 120));
   });
-  it("opens a direct detail route and only retries sign-in after confirmation", async () => {
-    mount("/app/schedule/2026-10-27/one");
-    fireEvent.click(await screen.findByRole("button", { name: "立即签到" }));
+  it("opens a course sheet without navigation and only retries sign-in after confirmation", async () => {
+    mount("/app/schedule/2026-10-27");
+    await openCourse();
+    const sign = await screen.findByRole("button", { name: "立即签到" });
+    await waitFor(() => expect(sign.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(sign);
     const confirm = await screen.findByRole("button", { name: "仍要签到" });
     expect(posts).toHaveLength(1);
     fireEvent.click(confirm);
@@ -303,9 +389,9 @@ describe("mobile routes and course interactions", () => {
       false,
       true,
     ]);
-    expect(
-      screen.getByRole("link", { name: "返回" }).getAttribute("href"),
-    ).toBe("/app/schedule/2026-10-27");
+    fireEvent.click(screen.getByRole("button", { name: "关闭课程详情" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("region", { name: "当日课程" })).toBeTruthy();
   });
   it("shows login and App authorization prompts without a loginName input", async () => {
     mount("/app/schedule/2026-10-27", "guest");
@@ -318,11 +404,12 @@ describe("mobile routes and course interactions", () => {
     expect(await screen.findByText("请在 App 内完成授权")).toBeTruthy();
     expect(screen.queryByRole("textbox")).toBeNull();
   });
-  it("handles invalid dates and missing courses on direct navigation", async () => {
+  it("handles invalid dates and no longer exposes a course detail route", async () => {
     mount("/app/schedule/2026-02-30");
     expect(screen.getByText("日期无效")).toBeTruthy();
     cleanup();
     mount("/app/schedule/2026-10-27/missing");
-    expect(await screen.findByText("课程不存在")).toBeTruthy();
+    expect(await screen.findByText("页面不存在")).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
