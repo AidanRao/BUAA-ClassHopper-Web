@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Check } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { CourseStatus } from "@/components/course-status";
 import { useSession } from "@/auth/context";
 import { api, ApiError } from "@/lib/api";
 import { courseTime, timeLabel, today, validDate } from "@/lib/dates";
@@ -158,12 +159,7 @@ function DaySchedule({ date }: { date: string }) {
                 )
               }
             >
-              <div
-                className={`course-status ${course.signStatus === 1 ? "signed" : ""}`}
-              >
-                {course.signStatus === 1 && <Check size={16} />}
-                <span>{course.signStatus === 1 ? "已签到" : "未签到"}</span>
-              </div>
+              <CourseStatus course={course} />
               <div className="course-information">
                 <h2 className="course-name">{course.courseName}</h2>
                 <p>任课教师：{course.teacherName.join("、") || "未提供"}</p>

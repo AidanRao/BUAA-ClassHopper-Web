@@ -8,6 +8,7 @@ export interface Course {
   teacherName: string[];
   classroomName: string[];
   signStatus: number;
+  isReserved: boolean;
   classBeginTime: string;
   classEndTime: string;
 }

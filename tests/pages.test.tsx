@@ -22,10 +22,11 @@ const course = {
   teacherName: ["王福祥", "另一位教师"],
   classroomName: ["(三)311"],
   signStatus: 0,
+  isReserved: false,
   classBeginTime: "2026-10-27 09:50:00",
   classEndTime: "2026-10-27 10:35:00",
 };
-let authorized: boolean, signed: boolean;
+let authorized: boolean, signed: boolean, reserved: boolean;
 const beginLogin = vi.fn<BrowserSession["begin"]>();
 const logout = vi.fn<BrowserSession["logout"]>();
 const posts: Record<string, unknown>[] = [];
@@ -33,6 +34,7 @@ beforeEach(() => {
   sessionStorage.clear();
   authorized = true;
   signed = false;
+  reserved = false;
   posts.length = 0;
   beginLogin.mockReset().mockResolvedValue(undefined);
   logout.mockReset();
@@ -53,7 +55,7 @@ beforeEach(() => {
             date: "2026-10-27",
             serverTime: "2026-10-27T00:00:00Z",
             items: [
-              { ...course, signStatus: signed ? 1 : 0 },
+              { ...course, signStatus: signed ? 1 : 0, isReserved: reserved },
               { ...course, courseScheduleId: "two" },
             ],
           },
@@ -115,6 +117,48 @@ function mount(
   );
 }
 describe("mobile routes and course interactions", () => {
+  describe.each([
+    [false, false, "未签到", "circle", "unsigned"],
+    [false, true, "已预约", "calendar-check", "reserved"],
+    [true, false, "已签到", "check", "signed"],
+    [true, true, "已签到", "check", "signed"],
+  ] as const)("signed=%s reserved=%s", (isSigned, isReserved, label, icon, state) => {
+    it.each(["list", "detail"] as const)("renders the %s status and decorative icon", async (variant) => {
+      signed = isSigned;
+      reserved = isReserved;
+      mount(`/app/schedule/2026-10-27${variant === "detail" ? "/one" : ""}`);
+      await screen.findAllByText("矩阵理论与应用");
+      const status = document.querySelector(variant === "list" ? ".course-status" : ".detail-status");
+      expect(status?.textContent).toBe(label);
+      expect(status?.classList.contains(state)).toBe(true);
+      const svg = status?.querySelector("svg");
+      expect(svg?.classList.contains(`lucide-${icon}`)).toBe(true);
+      expect(svg?.getAttribute("width")).toBe("16");
+      expect(svg?.getAttribute("height")).toBe("16");
+      expect(svg?.getAttribute("aria-hidden")).toBe("true");
+      if (variant === "detail" && !isSigned)
+        expect(screen.getByRole("button", { name: "立即签到" }).hasAttribute("disabled")).toBe(false);
+    });
+  });
+
+  it("refreshes a reserved course after manual sign-in and when returning to the schedule", async () => {
+    reserved = true;
+    mount("/app/schedule/2026-10-27");
+    const status = await screen.findByText("已预约");
+    fireEvent.click(status.closest("a")!);
+    const sign = await screen.findByRole("button", { name: "立即签到" });
+    await waitFor(() => expect(sign.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(sign);
+    fireEvent.click(await screen.findByRole("button", { name: "仍要签到" }));
+    await waitFor(() => expect(document.querySelector(".detail-status")?.textContent).toBe("已签到"));
+    expect(screen.queryByText("已预约")).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "返回" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(document.querySelector(".course-status")?.textContent).toBe("已签到");
+    expect(screen.queryByText("已预约")).toBeNull();
+    expect(posts.map((value) => value.allowOutsideWindow)).toEqual([false, true]);
+  });
+
   it("uses SSO logout from the account page", () => {
     mount("/app/account");
     fireEvent.click(screen.getByRole("button", { name: "退出登录" }));

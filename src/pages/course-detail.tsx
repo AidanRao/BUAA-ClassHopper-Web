@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { timeLabel, validDate } from "@/lib/dates";
 import type { Schedule } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { CourseStatus } from "@/components/course-status";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import {
   AuthorizationPrompt,
@@ -125,9 +126,7 @@ function CourseDetail({ date, id }: { date: string; id: string }) {
   const signed = course.signStatus === 1;
   return (
     <article className="detail-page">
-      <div className={`detail-status ${signed ? "signed" : ""}`}>
-        {signed ? "已签到" : "未签到"}
-      </div>
+      <CourseStatus course={course} variant="detail" />
       <h1 className="mt-3 break-words text-lg font-semibold leading-7">
         {course.courseName}
       </h1>

@@ -202,6 +202,9 @@
 .signed {
   color: var(--green-11);
 }
+.reserved {
+  color: var(--blue-11);
+}
 .course-information {
   flex: 1;
   min-width: 0;
@@ -284,11 +287,17 @@
   padding: 24px 24px 32px;
 }
 .detail-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--gray-11);
   font-size: 12px;
 }
 .detail-status.signed {
   color: var(--green-11);
+}
+.detail-status.reserved {
+  color: var(--blue-11);
 }
 .detail-fields {
   margin: 28px 0;
