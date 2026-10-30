@@ -28,6 +28,7 @@ npm run dev
 ## 路由和业务
 
 - `/`：预留系统宣传页，目前仅保留网页版入口，不依赖登录服务配置。
+- `/privacy-and-terms`：供 App 内置浏览器打开的用户协议与隐私页面，无需登录，不请求 `/app-config` 或初始化 SSO，支持系统深浅色与手机安全区。正文和联系方式维护在 `src/pages/privacy-and-terms.tsx`。
 - `/app`、`/app/schedule`：跳转到北京时间当天。
 - `/app/schedule/:date`：周历与当日课表；选择日期保存在 URL。
 - `/app/schedule/:date/:courseScheduleId`：课程详情和签到，支持直接打开、刷新与返回原日期。

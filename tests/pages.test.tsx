@@ -258,6 +258,19 @@ describe("mobile routes and course interactions", () => {
       .toBe("/app");
     expect(screen.queryByRole("navigation", { name: "主导航" })).toBeNull();
   });
+  it("opens privacy terms without a session provider, API requests or application navigation", () => {
+    render(
+      <MemoryRouter initialEntries={["/privacy-and-terms"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "用户协议与隐私" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "aidan.06233@gmail.com" }).getAttribute("href"))
+      .toBe("mailto:aidan.06233@gmail.com");
+    expect(screen.queryByRole("navigation", { name: "主导航" })).toBeNull();
+    expect(document.title).toBe("用户协议与隐私 | BUAA ClassHopper");
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("opens the application at /app and keeps all navigation under that prefix", () => {
     mount("/app", "guest");
     expect(screen.getByRole("link", { name: "课表" }).getAttribute("href"))

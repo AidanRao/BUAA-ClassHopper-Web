@@ -25,6 +25,7 @@ const AnnouncementDetailPage = lazy(() =>
 import { AccountPage } from "@/pages/account";
 import { LoginPage, CallbackPage } from "@/pages/login";
 import { HomePage } from "@/pages/home";
+import { PrivacyAndTermsPage } from "@/pages/privacy-and-terms";
 function Layout() {
   const location = useLocation();
   const announcement = /^\/app\/announcements\/.+/.test(location.pathname);
@@ -82,6 +83,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/privacy-and-terms" element={<PrivacyAndTermsPage />} />
       <Route path="/oauth/callback" element={<CallbackPage />} />
       <Route path="/app" element={<Layout />}>
         <Route index element={<Navigate replace to="/app/schedule" />} />

@@ -1,0 +1,88 @@
+.privacy-page {
+  --privacy-background: var(--gray-1);
+  --privacy-text: var(--gray-12);
+  --privacy-secondary: var(--gray-11);
+  --privacy-border: var(--gray-6);
+  --privacy-link: var(--blue-11);
+  min-height: 100dvh;
+  background: var(--privacy-background);
+  color: var(--privacy-text);
+  font-size: 16px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.privacy-document {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(32px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+}
+.privacy-document h1 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: 650;
+}
+.privacy-document h2,
+.privacy-document h3,
+.privacy-data dt {
+  font-size: 16px;
+  font-weight: 650;
+}
+.privacy-document h2 {
+  margin: 0 0 20px;
+  scroll-margin-top: 24px;
+}
+.privacy-document h3 {
+  margin: 24px 0 8px;
+}
+.privacy-document p,
+.privacy-document dd {
+  margin: 8px 0 16px;
+}
+.privacy-document .privacy-meta {
+  margin: 4px 0;
+  color: var(--privacy-secondary);
+  font-size: 13px;
+}
+.privacy-document header > p:last-child {
+  margin-top: 24px;
+}
+.privacy-document header {
+  margin-bottom: 32px;
+}
+.privacy-document a {
+  color: var(--privacy-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.privacy-document a:focus-visible {
+  outline: 1px solid var(--privacy-link);
+  outline-offset: 4px;
+}
+.privacy-document section + section {
+  border-top: 1px solid var(--privacy-border);
+  margin-top: 32px;
+  padding-top: 32px;
+}
+.privacy-document ul {
+  padding-left: 1.4em;
+  list-style: disc;
+}
+.privacy-document li + li {
+  margin-top: 10px;
+}
+.privacy-data dt {
+  margin-top: 20px;
+}
+/* Radix Colors grayDark / blueDark, scoped to the standalone document. */
+@media (prefers-color-scheme: dark) {
+  .privacy-page {
+    color-scheme: dark;
+    --privacy-background: #111111;
+    --privacy-text: #eeeeee;
+    --privacy-secondary: #b4b4b4;
+    --privacy-border: #3a3a3a;
+    --privacy-link: #70b8ff;
+  }
+}

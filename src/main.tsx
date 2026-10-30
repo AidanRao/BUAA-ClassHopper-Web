@@ -6,6 +6,7 @@ import { App } from "./App";
 import { BrowserSession } from "./auth/session";
 import { SessionContext } from "./auth/context";
 import { HomePage } from "./pages/home";
+import { PrivacyAndTermsPage } from "./pages/privacy-and-terms";
 import type { PublicConfig } from "./lib/types";
 import "./styles.css";
 const root = createRoot(document.getElementById("root")!);
@@ -47,6 +48,8 @@ async function start() {
 }
 if (location.pathname === "/") {
   root.render(<HomePage />);
+} else if (/^\/privacy-and-terms\/?$/.test(location.pathname)) {
+  root.render(<PrivacyAndTermsPage />);
 } else {
   void start().catch((error: unknown) =>
     root.render(

@@ -29,6 +29,8 @@ describe("Vercel platform routing", () => {
   it("keeps page deep links and OAuth callbacks inside the SPA", () => {
     for (const path of [
       "/",
+      "/privacy-and-terms",
+      "/privacy-and-terms/",
       "/app",
       "/app/",
       "/app/login",
