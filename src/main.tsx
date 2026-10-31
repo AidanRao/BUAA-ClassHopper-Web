@@ -8,8 +8,20 @@ import { SessionContext } from "./auth/context";
 import { HomePage } from "./pages/home";
 import { PrivacyAndTermsPage } from "./pages/privacy-and-terms";
 import type { PublicConfig } from "./lib/types";
+import { analytics } from "./lib/analytics";
+import { AnalyticsRouteTracker } from "./components/analytics-route-tracker";
 import "./styles.css";
-const root = createRoot(document.getElementById("root")!);
+const reportReactError = (error: unknown, info: { componentStack?: string | null }) => {
+  analytics?.captureError(error, {
+    component_stack: (info.componentStack ?? "").slice(0, 2000),
+  });
+  console.error(error);
+};
+const root = createRoot(document.getElementById("root")!, {
+  onCaughtError: reportReactError,
+  onUncaughtError: reportReactError,
+  onRecoverableError: reportReactError,
+});
 async function start() {
   const response = await fetch("/app-config", {
     credentials: "omit",
@@ -23,6 +35,7 @@ async function start() {
   )
     throw new Error("站点配置无效");
   const session = new BrowserSession(config);
+  analytics?.bindSession(session);
   const queries = new QueryClient({
     defaultOptions: {
       queries: { retry: false, refetchOnWindowFocus: true },
@@ -39,6 +52,7 @@ async function start() {
       <QueryClientProvider client={queries}>
         <SessionContext.Provider value={session}>
           <BrowserRouter>
+            <AnalyticsRouteTracker />
             <App />
           </BrowserRouter>
         </SessionContext.Provider>
@@ -47,6 +61,7 @@ async function start() {
   );
 }
 if (location.pathname === "/") {
+  analytics?.visit("/");
   root.render(<HomePage />);
 } else if (/^\/privacy-and-terms\/?$/.test(location.pathname)) {
   root.render(<PrivacyAndTermsPage />);

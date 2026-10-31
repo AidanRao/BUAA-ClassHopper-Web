@@ -30,11 +30,11 @@ export function ConfirmDialog({
           </AlertDialog.Description>
           <div className="mt-6 flex justify-end gap-2">
             <AlertDialog.Cancel asChild>
-              <Button variant="ghost" disabled={pending}>
+              <Button variant="ghost" disabled={pending} data-analytics-id="cancel-confirmation">
                 取消
               </Button>
             </AlertDialog.Cancel>
-            <Button onClick={onConfirm} disabled={pending}>
+            <Button onClick={onConfirm} disabled={pending} data-analytics-id="confirm-action">
               {pending ? "处理中…" : action}
             </Button>
           </div>

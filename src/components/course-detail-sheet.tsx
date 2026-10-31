@@ -177,6 +177,7 @@ export function CourseDetailSheet({ date, id, onClose, returnFocusTo }: {
     </>,
     <Button
       className="w-full"
+      data-analytics-id="sign-in"
       disabled={signed || mutation.isPending || query.isFetching}
       onClick={() => {
         setFeedback("");

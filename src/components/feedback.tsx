@@ -60,7 +60,7 @@ export function Failure({
       description={error instanceof Error ? error.message : "请稍后重试"}
     >
       {retry && (
-        <Button variant="outline" onClick={retry}>
+        <Button variant="outline" onClick={retry} data-analytics-id="retry">
           <RefreshCw size={16} />
           重试
         </Button>
@@ -74,6 +74,7 @@ export function LoginPrompt() {
     <Message title="登录后查看课表" icon={<CalendarDays size={24} />}>
       <Button asChild>
         <Link
+          data-analytics-id="login"
           to={`/app/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
         >
           去登录
@@ -95,7 +96,7 @@ export function AuthorizationPrompt({
       description="授权后即可在这里查看课表和签到。"
       icon={<LockKeyhole size={24} />}
     >
-      <Button variant="outline" onClick={refresh} disabled={busy}>
+      <Button variant="outline" onClick={refresh} disabled={busy} data-analytics-id="refresh-authorization">
         <RefreshCw size={16} />
         刷新状态
       </Button>

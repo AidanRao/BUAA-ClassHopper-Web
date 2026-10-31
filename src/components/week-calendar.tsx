@@ -25,6 +25,7 @@ export function WeekCalendar({
             variant="ghost"
             onClick={() => select(addDays(date, -7))}
             aria-label="上一周"
+            data-analytics-id="schedule-previous-week"
           >
             <ChevronLeft size={18} />
           </Button>
@@ -33,6 +34,7 @@ export function WeekCalendar({
             variant="ghost"
             onClick={() => select(addDays(date, 7))}
             aria-label="下一周"
+            data-analytics-id="schedule-next-week"
           >
             <ChevronRight size={18} />
           </Button>
@@ -41,6 +43,7 @@ export function WeekCalendar({
           variant="ghost"
           size="sm"
           onClick={() => select(current)}
+          data-analytics-id="schedule-today"
           disabled={date === current}
         >
           今天
@@ -54,6 +57,7 @@ export function WeekCalendar({
             setOpen(true);
           }}
           aria-label="选择日期"
+          data-analytics-id="open-date-picker"
         >
           <span>{Number(date.slice(5, 7))}</span>
           <span className="text-sm">月</span>
@@ -63,6 +67,7 @@ export function WeekCalendar({
           {days.map((day, index) => (
             <button
               key={day}
+              data-analytics-id="select-schedule-date"
               className={cn(
                 "day-cell",
                 day === date && "selected",
@@ -94,6 +99,7 @@ export function WeekCalendar({
         />
         <Button
           className="mt-5 w-full"
+          data-analytics-id="apply-schedule-date"
           disabled={!validDate(draft)}
           onClick={() => {
             select(draft);

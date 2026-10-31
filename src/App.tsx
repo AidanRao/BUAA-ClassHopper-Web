@@ -47,7 +47,7 @@ function Layout() {
       {announcement && (
         <div className="detail-navigation">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/app/announcements" aria-label="返回">
+            <Link to="/app/announcements" aria-label="返回" data-analytics-id="back-to-announcements">
               <ArrowLeft size={20} />
             </Link>
           </Button>
@@ -66,11 +66,11 @@ function Layout() {
       </main>
       <nav className="bottom-nav" aria-label="主导航">
         {[
-          { to: "/app/schedule", name: "课表", Icon: CalendarDays },
-          { to: "/app/announcements", name: "公告", Icon: Megaphone },
-          { to: "/app/account", name: "我的", Icon: UserRound },
-        ].map(({ to, name, Icon }) => (
-          <NavLink key={to} to={to}>
+          { to: "/app/schedule", name: "课表", Icon: CalendarDays, analyticsId: "nav-schedule" },
+          { to: "/app/announcements", name: "公告", Icon: Megaphone, analyticsId: "nav-announcements" },
+          { to: "/app/account", name: "我的", Icon: UserRound, analyticsId: "nav-account" },
+        ].map(({ to, name, Icon, analyticsId }) => (
+          <NavLink key={to} to={to} data-analytics-id={analyticsId}>
             <Icon size={21} strokeWidth={1.6} />
             <span>{name}</span>
           </NavLink>

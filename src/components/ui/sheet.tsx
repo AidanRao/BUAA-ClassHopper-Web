@@ -39,7 +39,7 @@ export function Sheet({
               {titleAside}
             </div>
             <Dialog.Close asChild>
-              <Button size="icon" variant="ghost" aria-label={closeLabel} className="-mr-2 -mt-2 shrink-0">
+              <Button size="icon" variant="ghost" aria-label={closeLabel} data-analytics-id="close-sheet" className="-mr-2 -mt-2 shrink-0">
                 <X size={20} />
               </Button>
             </Dialog.Close>

@@ -124,6 +124,7 @@ function DaySchedule({ date }: { date: string }) {
       <Message title="当天没有课程">
         <Button
           variant="ghost"
+          data-analytics-id="refresh-schedule"
           onClick={() => {
             void query.refetch();
           }}
@@ -141,6 +142,7 @@ function DaySchedule({ date }: { date: string }) {
             <button
               type="button"
               className="course-row"
+              data-analytics-id="open-course"
               aria-haspopup="dialog"
               onClick={(event) =>
                 setSelected({ id: course.courseScheduleId, trigger: event.currentTarget })
@@ -164,6 +166,7 @@ function DaySchedule({ date }: { date: string }) {
       <div className="flex justify-center py-5">
         <Button
           variant="ghost"
+          data-analytics-id="refresh-schedule"
           onClick={() => {
             void query.refetch();
           }}

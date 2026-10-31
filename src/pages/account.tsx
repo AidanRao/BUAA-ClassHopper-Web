@@ -57,7 +57,7 @@ export function AccountPage() {
       </section>
       {session.phase === "guest" ? (
         <Button className="w-full" asChild>
-          <Link to="/app/login?returnTo=%2Fapp%2Faccount">去登录</Link>
+          <Link to="/app/login?returnTo=%2Fapp%2Faccount" data-analytics-id="login">去登录</Link>
         </Button>
       ) : (
         <>
@@ -80,6 +80,7 @@ export function AccountPage() {
           <Button
             variant="ghost"
             className="mt-6 w-full"
+            data-analytics-id="logout"
             onClick={() => session.manager.logout()}
           >
             <LogOut size={16} />

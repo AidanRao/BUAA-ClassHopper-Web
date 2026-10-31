@@ -22,6 +22,7 @@ npm run dev
 | `SSO_ISSUER`            | 固定 SSO 源地址，必须 HTTPS，不含路径和凭据      |
 | `SSO_CLIENT_ID`         | 与 Android 复用的公共 OAuth client ID            |
 | `API_PLATFORM_BASE_URL` | 固定 API Platform 源地址；本地允许 loopback HTTP |
+| `VITE_ANALYTICS_APP_ID` | 公开的事件统计应用 ID；构建时读取，留空关闭统计 |
 
 生产配置由 Vercel Function 的 `/app-config` 在运行时返回公开的 issuer 和 client ID，浏览器不读取服务端密钥。`/oauth/token`、`/oauth/userinfo` 和允许的 `/api/buaa-classhopper/...` 请求通过固定目标代理；不提供任意 URL、管理 API 或登录 Cookie 转发。公告和广告代理明确移除 Authorization 和 Cookie。
 
@@ -47,7 +48,19 @@ App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classho
 
 ## 广告
 
-在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，格式为 `banner`，并配置素材、活动与投放。页面取第一条投放展示在周历下方，无数据、接口失败或图片失败时不占位。不添加开屏或埋点。图片与目标链接仅使用 HTTP/HTTPS，不执行 App scheme 或危险协议。
+在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，格式为 `banner`，并配置素材、活动与投放。页面取第一条投放展示在周历下方，无数据、接口失败或图片失败时不占位。不添加开屏或广告专用事件；可交互广告链接参与通用点击统计。图片与目标链接仅使用 HTTP/HTTPS，不执行 App scheme 或危险协议。
+
+## 使用统计
+
+使用锁定版本 `@aidanrao/event-analytics@0.2.0`，浏览器直接向 `https://events.aidanrao.top/v1/events` 上报。设置公开构建变量 `VITE_ANALYTICS_APP_ID` 后启用；为空或不符合 1–64 位字母、数字、下划线及连字符的 ID 时关闭。`appVersion` 来自本项目 `package.json`，不使用 SDK 版本。修改该变量后需要重新构建并部署；不要填入密钥或沿用 SDK 的示例 App ID。
+
+采集宣传首页和 `/app` 的页面访问、可见停留、异常及交互点击，使用稳定的页面分类与主要操作标识。不采集隐私页、OAuth 回调页或仅用于跳转的入口路由。课程详情 Sheet 不产生额外页面访问。请求、性能、滚动、曝光及业务结果专用事件未开启；URL 不携带 query 或 hash，不读取表单值、请求体、请求头、姓名、邮箱等额外账号资料。异常消息与堆栈属于诊断内容，业务代码应避免将凭据写入异常。
+
+每条事件携带持久化的浏览器标识 `identity.web_id`；`identity.user_id` 对应常见埋点中的 `user_unique_id`：未登录时使用 `web_id`，验证登录后使用 `profile.id`，退出或失效时恢复为原来的 `web_id`。`identity.anonymous_id` 与 `web_id` 相同，不生成第二个浏览器标识；标签页会话仍由 SDK 管理。浏览器标识按接收地址和 App ID 隔离保存在 localStorage，存储受限时退化为页面内存，清除站点数据后会重新生成。独立打开首页不会初始化 SSO，因此使用 `web_id` 作为用户身份。访客事件也计入用户数与留存；已经上报的访客事件不会自动合并到登录账号。
+
+Web 与 Android 共用统计 App：将 `VITE_ANALYTICS_APP_ID` 设置为 Android 的 `ANALYTICS_APP_ID`，在该应用的 Origin 白名单中增加 Web Origin，同时保留 Android 需要的 `allow_no_origin: true`。事件可通过 `context.platform` 区分 Web 和 Android。Android 当前使用设备 ID，Web 登录后使用账号 ID，因此共用 App 不代表跨端用户自动去重；同一浏览器登录前后的身份也可能分别计入用户数。
+
+事件服务中对应应用必须允许实际 Web Origin（协议、域名和端口），按需添加生产、固定 Preview、本地 `http://127.0.0.1:5180` 及预览 `http://127.0.0.1:5181`，并保证跨域预检可通过。Web 的 CSP 仅额外放行 `https://events.aidanrao.top`，不通过本站网关转发。上报失败不影响登录、查询或签到；SDK 使用内存队列，离开页面时只尝试发送，不保证送达，也不提供离线补报。HTTP 202 仅表示接收成功，实际入库需要另行验证。
 
 ## 验证与构建
 
@@ -58,7 +71,7 @@ npm run build
 npm run preview
 ```
 
-`npm run build` 生成 `dist/` 静态资源，公告模块按需加载。Vercel 部署时另行构建 `api/gateway.ts`，运行在 Node.js 22；该函数与 Vite 本地代理共用 `server/proxy.ts`。`npm run preview` 在本地预览静态产物，并通过 Node HTTP 代理处理同源 API，不模拟完整 Vercel 路由平台。生产 CSP 限制脚本与请求为同源，并禁止嵌入；开发模式放行 Vite 自身的预处理脚本。
+`npm run build` 生成 `dist/` 静态资源，公告模块按需加载。Vercel 部署时另行构建 `api/gateway.ts`，运行在 Node.js 22；该函数与 Vite 本地代理共用 `server/proxy.ts`。`npm run preview` 在本地预览静态产物，并通过 Node HTTP 代理处理同源 API，不模拟完整 Vercel 路由平台。生产 CSP 限制脚本为同源，请求允许同源与指定事件统计域名，并禁止嵌入；开发模式放行 Vite 自身的预处理脚本。
 
 组件和单元测试使用模拟 SSO、上游课表及签到响应，不会提交真实签到。浏览器验收包含 320、375、390、430px 布局；验证记录见 `docs/verification.md`。浏览器截图位于忽略目录 `output/playwright/`。
 
@@ -68,6 +81,7 @@ npm run preview
 
 1. 在 Vercel 导入本仓库，Framework Preset 选择 **Vite**，Node.js 选择 **22.x**。构建命令 `npm run build`，输出目录 `dist`；`vercel.json` 已声明这些配置。
 2. 在 Vercel 项目的 Environment Variables 中设置 `SSO_ISSUER`、`SSO_CLIENT_ID` 和 `API_PLATFORM_BASE_URL`，分别选择需要的 Development、Preview、Production 环境。生产 API 与 SSO 均使用 HTTPS 源地址。这些变量由 Function 运行时读取，不使用 `VITE_` 前缀。
+   需要统计时另设公开构建变量 `VITE_ANALYTICS_APP_ID`，并在事件服务允许对应 Web Origin；该变量会写入浏览器产物。
 3. 给生产环境绑定确定的 Web 域名，在现有 SSO 公共 client 中精确登记 `https://<Web 域名>/oauth/callback`，保留 Android 回调。Preview 联调也需要固定域名和独立精确登记，不能直接依赖每次变化的预览 URL。未登记的预览地址只能验收匿名页面。
 4. 先发布 API Platform 的接口并配置服务调用 HMAC 密钥，准备 `web-schedule-banner` 广告位；本次新增能力只使用现有 KV，不新增 D1 migration。
 5. 执行类型检查、测试与构建后，可通过 Vercel Git 集成发布；或在明确选择并关联项目后运行 `npm run deploy`。后者执行 **生产部署**。仓库不会自动创建或关联线上项目。

@@ -34,7 +34,7 @@ export function LoginPage() {
           <p className="w-full text-sm text-destructive" role="alert">
             {error}
           </p>
-          <Button onClick={begin}>重试</Button>
+          <Button onClick={begin} data-analytics-id="retry-login">重试</Button>
         </>
       )}
     </Message>

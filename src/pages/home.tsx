@@ -46,7 +46,7 @@ function ProductImage({ slot }: { slot: keyof typeof homeImages }) {
 function WebLink({ className = "" }: { className?: string }) {
   return (
     <Button asChild className={`home-button ${className}`}>
-      <a href="/app">
+      <a href="/app" data-analytics-id="open-web">
         进入网页版 <ArrowUpRight size={16} aria-hidden="true" />
       </a>
     </Button>
@@ -56,7 +56,7 @@ function WebLink({ className = "" }: { className?: string }) {
 function AndroidLink() {
   return (
     <Button asChild variant="outline" className="home-button home-button--secondary">
-      <a href={androidDownloadUrl}>
+      <a href={androidDownloadUrl} data-analytics-id="download-android">
         <Download size={16} aria-hidden="true" /> 下载 Android 版
       </a>
     </Button>

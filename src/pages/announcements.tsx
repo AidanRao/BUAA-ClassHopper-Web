@@ -42,6 +42,7 @@ export function AnnouncementsPage() {
             <Link
               to={`/app/announcements/${encodeURIComponent(item.id)}`}
               className="announcement-row"
+              data-analytics-id="open-announcement"
             >
               <div className="min-w-0 flex-1">
                 <h2 className="break-words text-lg font-medium leading-7">
@@ -86,6 +87,7 @@ export function AnnouncementsPage() {
             variant="ghost"
             disabled={page === 1}
             aria-label="上一页"
+            data-analytics-id="announcements-previous"
             onClick={() => setPage(page - 1)}
           >
             <ChevronLeft size={18} />
@@ -98,6 +100,7 @@ export function AnnouncementsPage() {
             variant="ghost"
             disabled={page >= totalPages}
             aria-label="下一页"
+            data-analytics-id="announcements-next"
             onClick={() => setPage(page + 1)}
           >
             <ChevronRight size={18} />
