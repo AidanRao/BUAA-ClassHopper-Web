@@ -9,7 +9,7 @@
 ```sh
 npm ci
 cp .env.example .env.development.local
-# 填写现有 ClassHopper 公共 client ID
+# 填写现有 BUAA ClassHopper 公共 client ID
 npm run dev
 ```
 
@@ -27,7 +27,7 @@ npm run dev
 
 ## 路由和业务
 
-- `/`：预留系统宣传页，目前仅保留网页版入口，不依赖登录服务配置。
+- `/`：系统宣传首页，提供网页版入口与 Android 下载，不依赖登录服务配置。
 - `/privacy-and-terms`：供 App 内置浏览器打开的用户协议与隐私页面，无需登录，不请求 `/app-config` 或初始化 SSO，支持系统深浅色与手机安全区。正文和联系方式维护在 `src/pages/privacy-and-terms.tsx`。
 - `/app`、`/app/schedule`：跳转到北京时间当天。
 - `/app/schedule/:date`：周历与当日课表；选择日期保存在 URL。
@@ -36,6 +36,8 @@ npm run dev
 - `/app/account`：SSO 账号、iClass 授权状态和退出登录。
 - `/app/login`：自动前往 SSO，登录后返回 `/app` 内的原页面。
 - `/oauth/callback`：保留已登记的 PKCE 回调地址，完成一次性回调校验。
+
+首页图片集中维护在 `src/pages/home.tsx` 的 `homeImages`：`hero` 使用 Android 首页截图，`reservation` 使用预约签到截图，原图保存在 `public/images/`；`schedule` 暂留 4:3 空白画框。填入 `src` 和原图 `width`、`height` 即可展示，截图按原始比例完整显示，不裁切。未填写时不请求图片。Android 下载地址由同文件的 `androidDownloadUrl` 维护。
 
 登录需要浏览器支持 Web Crypto、Web Locks、localStorage 和 sessionStorage，跨标签页状态通过 BroadcastChannel 同步。Access Token 只放内存；Refresh Token 存在 `classhopper.session.v1`，会串行轮换；state、PKCE verifier 和站内返回地址只放 sessionStorage。明确拒绝刷新时退出，网络故障保留 Refresh Token。点击退出登录时先清除本站凭据和用户缓存，再前往 SSO 的 `/logout` 页面；用户在 SSO 确认退出后，由 SSO 注销全局会话。此流程与 Android 版一致，不撤销 iClass 授权。
 

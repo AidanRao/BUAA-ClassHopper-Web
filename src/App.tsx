@@ -39,7 +39,7 @@ function Layout() {
           ? "登录"
           : "课表";
   useEffect(() => {
-    document.title = `${title} | ClassHopper`;
+    document.title = `${title} | BUAA ClassHopper`;
     window.scrollTo(0, 0);
   }, [location.pathname, title]);
   return (

@@ -1,0 +1,403 @@
+@import "@radix-ui/colors/slate.css";
+
+.classhopper-home {
+  --background: var(--slate-1);
+  --foreground: var(--slate-12);
+  --primary: var(--blue-11);
+  --primary-foreground: var(--slate-1);
+  --border: var(--slate-7);
+  --ring: var(--blue-11);
+  background: var(--slate-1);
+  color: var(--slate-12);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+
+.classhopper-home .home-container {
+  width: min(1120px, calc(100% - 64px));
+  margin-inline: auto;
+}
+
+.classhopper-home .home-header {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.classhopper-home .home-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.classhopper-home .home-brand img {
+  border-radius: 8px;
+}
+
+.classhopper-home .home-navigation {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-size: 14px;
+}
+
+.classhopper-home .home-section-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--slate-11);
+}
+
+.classhopper-home .home-button {
+  min-height: 48px;
+  padding-inline: 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.classhopper-home .home-button:hover {
+  background: var(--blue-12);
+}
+
+.classhopper-home .home-header-button {
+  min-height: 44px;
+  padding-inline: 16px;
+}
+
+.classhopper-home .home-button--secondary {
+  background: var(--slate-1);
+  color: var(--slate-12);
+  border: 1px solid var(--slate-7);
+}
+
+.classhopper-home .home-button--secondary:hover {
+  background: var(--slate-3);
+  border-color: var(--slate-8);
+}
+
+.classhopper-home .home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  align-items: center;
+  gap: 80px;
+  padding-block: 64px 112px;
+}
+
+.classhopper-home h1,
+.classhopper-home h2,
+.classhopper-home h3,
+.classhopper-home p {
+  margin: 0;
+}
+
+.classhopper-home h1 {
+  font-size: 56px;
+  line-height: 1.22;
+  font-weight: 650;
+  letter-spacing: -2px;
+}
+
+.classhopper-home .home-hero-copy > p {
+  margin-top: 28px;
+  color: var(--slate-11);
+}
+
+.classhopper-home .home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+.classhopper-home .home-image {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--slate-6);
+  border-radius: 12px;
+  background: var(--slate-2);
+  overflow: hidden;
+}
+
+.classhopper-home .home-image--hero {
+  aspect-ratio: 4 / 5;
+}
+
+.classhopper-home .home-image--filled {
+  max-width: 320px;
+  justify-self: center;
+}
+
+.classhopper-home .home-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.classhopper-home .home-features {
+  border-top: 1px solid var(--slate-6);
+  padding-block: 96px 112px;
+  display: grid;
+  gap: 112px;
+  scroll-margin-top: 32px;
+}
+
+.classhopper-home .home-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 96px;
+  align-items: center;
+}
+
+.classhopper-home .home-feature--reverse .home-image {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.classhopper-home .home-feature--reverse .home-feature-copy {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.classhopper-home h2 {
+  font-size: 28px;
+  line-height: 1.45;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+.classhopper-home .home-feature-copy p {
+  margin-top: 20px;
+  color: var(--slate-11);
+  line-height: 1.85;
+}
+
+.classhopper-home .home-download {
+  padding-block: 80px;
+  border-block: 1px solid var(--slate-6);
+  background: var(--slate-2);
+  scroll-margin-top: 24px;
+}
+
+.classhopper-home .home-download h2 {
+  text-align: center;
+}
+
+.classhopper-home .home-platforms {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.classhopper-home .home-platform {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 24px;
+}
+
+.classhopper-home .home-platform + .home-platform {
+  border-left: 1px solid var(--slate-6);
+}
+
+.classhopper-home .home-platform > svg {
+  color: var(--slate-11);
+  margin-bottom: 16px;
+}
+
+.classhopper-home h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.classhopper-home .home-platform p {
+  font-size: 14px;
+  color: var(--slate-11);
+  margin-top: 8px;
+  text-align: center;
+}
+
+.classhopper-home .home-platform .home-button {
+  margin-top: 24px;
+}
+
+.classhopper-home .home-footer {
+  min-height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--slate-11);
+}
+
+.classhopper-home .home-footer-brand {
+  color: var(--slate-12);
+  font-weight: 600;
+}
+
+.classhopper-home .home-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.classhopper-home .home-section-link:hover,
+.classhopper-home .home-footer a:hover {
+  color: var(--blue-11);
+}
+
+.classhopper-home .home-skip-link {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  padding: 8px 16px;
+  background: var(--slate-1);
+  color: var(--slate-12);
+  border: 1px solid var(--slate-7);
+  transform: translateY(-200%);
+  z-index: 1;
+  font-size: 14px;
+}
+
+.classhopper-home .home-skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (max-width: 1023px) {
+  .classhopper-home .home-hero {
+    gap: 40px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  }
+
+  .classhopper-home .home-feature {
+    gap: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  .classhopper-home .home-container {
+    width: calc(100% - 40px);
+  }
+
+  .classhopper-home .home-header {
+    min-height: 80px;
+    gap: 12px;
+  }
+
+  .classhopper-home .home-brand {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .classhopper-home .home-brand img {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .classhopper-home .home-section-link {
+    display: none;
+  }
+
+  .classhopper-home .home-header-button {
+    padding-inline: 12px;
+  }
+
+  .classhopper-home .home-header-button svg {
+    display: none;
+  }
+
+  .classhopper-home .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+    padding-block: 48px 64px;
+  }
+
+  .classhopper-home h1 {
+    font-size: 36px;
+    letter-spacing: -1px;
+  }
+
+  .classhopper-home .home-hero-copy > p {
+    margin-top: 24px;
+  }
+
+  .classhopper-home .home-actions {
+    margin-top: 28px;
+  }
+
+  .classhopper-home .home-image--hero:not(.home-image--filled) {
+    max-width: 400px;
+    justify-self: center;
+  }
+
+  .classhopper-home .home-features {
+    padding-block: 64px;
+    gap: 64px;
+  }
+
+  .classhopper-home .home-feature {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .classhopper-home .home-feature .home-feature-copy {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .classhopper-home .home-feature .home-image {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .classhopper-home h2 {
+    font-size: 24px;
+  }
+
+  .classhopper-home .home-feature-copy p {
+    margin-top: 16px;
+  }
+
+  .classhopper-home .home-download {
+    padding-block: 56px;
+  }
+
+  .classhopper-home .home-platforms {
+    margin-top: 36px;
+  }
+
+  .classhopper-home .home-footer {
+    padding-block: 24px;
+    min-height: 96px;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+}
+
+@media (max-width: 479px) {
+  .classhopper-home .home-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .classhopper-home .home-platforms {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .classhopper-home .home-platform + .home-platform {
+    border-left: 0;
+    border-top: 1px solid var(--slate-6);
+    padding-top: 32px;
+  }
+}

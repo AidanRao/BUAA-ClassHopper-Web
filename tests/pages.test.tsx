@@ -253,10 +253,12 @@ describe("mobile routes and course interactions", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("heading", { name: "ClassHopper" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "进入网页版" }).getAttribute("href"))
-      .toBe("/app");
+    expect(screen.getByRole("heading", { level: 1, name: "课程安排，随时掌握。" })).toBeTruthy();
+    for (const link of screen.getAllByRole("link", { name: "进入网页版" })) {
+      expect(link.getAttribute("href")).toBe("/app");
+    }
     expect(screen.queryByRole("navigation", { name: "主导航" })).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
   });
   it("opens privacy terms without a session provider, API requests or application navigation", () => {
     render(
