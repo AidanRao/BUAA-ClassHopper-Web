@@ -11,6 +11,7 @@ import {
 import { ArrowLeft, CalendarDays, Megaphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/feedback";
+import { AuthorizationProvider } from "@/auth/authorization-provider";
 import { SchedulePage } from "@/pages/schedule";
 const AnnouncementsPage = lazy(() =>
   import("@/pages/announcements").then((module) => ({
@@ -85,7 +86,10 @@ export function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/privacy-and-terms" element={<PrivacyAndTermsPage />} />
       <Route path="/oauth/callback" element={<CallbackPage />} />
-      <Route path="/app" element={<Layout />}>
+      <Route
+        path="/app"
+        element={<AuthorizationProvider><Layout /></AuthorizationProvider>}
+      >
         <Route index element={<Navigate replace to="/app/schedule" />} />
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="schedule/:date" element={<SchedulePage />} />

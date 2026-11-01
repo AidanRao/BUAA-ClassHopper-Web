@@ -1,6 +1,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,7 +9,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router";
+import { Link, MemoryRouter, useLocation } from "react-router";
 import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "../src/App";
 import { SessionContext } from "../src/auth/context";
@@ -88,7 +89,11 @@ afterEach(() => {
 });
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location">{location.pathname}</output>;
+  return <>
+    <output data-testid="location">{location.pathname}</output>
+    <Link to="/">离开应用</Link>
+    <Link to="/app">重新进入应用</Link>
+  </>;
 }
 async function openCourse() {
   const rows = await screen.findAllByRole("button", { name: /矩阵理论与应用/ });
@@ -100,13 +105,17 @@ function mount(
   phase: SessionState["phase"] = "ready",
   profile: SessionState["profile"] = { id: "user-1" },
 ) {
-  const state: SessionState = {
+  let state: SessionState = {
     phase,
     profile: phase === "ready" ? profile : null,
     error: null,
   };
+  const listeners = new Set<() => void>();
   const session = {
-    subscribe: () => () => {},
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
     snapshot: () => state,
     token: async () => "user-token",
     clear: vi.fn(),
@@ -116,7 +125,7 @@ function mount(
   const query = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
+  const view = render(
     <QueryClientProvider client={query}>
       <SessionContext.Provider value={session}>
         <MemoryRouter initialEntries={[path]}>
@@ -128,10 +137,43 @@ function mount(
       </SessionContext.Provider>
     </QueryClientProvider>,
   );
+  return {
+    ...view,
+    setSession(next: SessionState) {
+      state = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
 }
 describe("mobile routes and course interactions", () => {
   const callsTo = (path: string) => vi.mocked(fetch).mock.calls
     .filter(([input]) => String(input).includes(path)).length;
+
+  it("loads authorization after session restoration and reuses it across app routes", async () => {
+    const view = mount("/app/account", "loading");
+    expect(callsTo("/authorization")).toBe(0);
+    act(() => view.setSession({ phase: "ready", profile: { id: "user-1" }, error: null }));
+    await screen.findByText("已完成授权");
+    const checks = callsTo("/authorization");
+    expect(checks).toBe(1);
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBe(checks);
+  });
+
+  it("loads a separate authorization result after switching accounts", async () => {
+    authorized = false;
+    const view = mount("/app/account");
+    await screen.findByText("请在 App 内完成授权");
+    const checks = callsTo("/authorization");
+    authorized = true;
+    act(() => view.setSession({ phase: "ready", profile: { id: "user-2" }, error: null }));
+    await screen.findByText("已完成授权");
+    expect(callsTo("/authorization")).toBe(checks + 1);
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBe(checks + 1);
+  });
 
   it("reuses authorization across dates and course details", async () => {
     mount("/app/schedule/2026-10-27");
@@ -168,25 +210,49 @@ describe("mobile routes and course interactions", () => {
     expect(callsTo("course-schedules?date=2026-11-04")).toBeGreaterThan(0);
   });
 
-  it("checks authorization again when returning to the schedule page", async () => {
+  it("shares the unauthorized result across account, announcements and schedule until manual refresh", async () => {
     authorized = false;
     mount("/app/schedule/2026-10-27");
     await screen.findByText("请在 App 内完成授权");
     const checks = callsTo("/authorization");
+    fireEvent.click(screen.getByRole("link", { name: "我的" }));
+    await screen.findByText("请在 App 内完成授权");
+    expect(callsTo("/authorization")).toBe(checks);
     fireEvent.click(screen.getByRole("link", { name: "公告" }));
     await screen.findByText("暂时无法加载");
     authorized = true;
     fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findByText("请在 App 内完成授权");
+    expect(callsTo("/authorization")).toBe(checks);
+    expect(callsTo("course-schedules")).toBe(0);
+    fireEvent.click(screen.getByRole("button", { name: "刷新状态" }));
     await screen.findAllByText("矩阵理论与应用");
-    expect(callsTo("/authorization")).toBeGreaterThan(checks);
+    expect(callsTo("/authorization")).toBe(checks + 1);
+    fireEvent.click(screen.getByRole("link", { name: "我的" }));
+    await screen.findByText("已完成授权");
+    expect(callsTo("/authorization")).toBe(checks + 1);
   });
 
-  it("waits for a fresh authorization check before querying a previously authorized page", async () => {
+  it("loads authorization on direct announcement entry and shares the result with account and schedule", async () => {
+    mount("/app/announcements");
+    await screen.findByText("暂时无法加载");
+    const checks = callsTo("/authorization");
+    expect(checks).toBeGreaterThan(0);
+    expect(callsTo("course-schedules")).toBe(0);
+    fireEvent.click(screen.getByRole("link", { name: "我的" }));
+    await screen.findByText("已完成授权");
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBe(checks);
+  });
+
+  it("checks authorization again after leaving and reentering app, before loading courses", async () => {
     mount("/app/schedule/2026-10-27");
     await screen.findAllByText("矩阵理论与应用");
-    fireEvent.click(screen.getByRole("link", { name: "公告" }));
-    await screen.findByText("暂时无法加载");
+    fireEvent.click(screen.getByRole("link", { name: "离开应用" }));
+    await screen.findByRole("heading", { name: "课程安排，随时掌握。" });
     const schedules = callsTo("course-schedules");
+    const checks = callsTo("/authorization");
     authorized = false;
     const original = vi.mocked(fetch).getMockImplementation()!;
     let finish: (() => void) | undefined;
@@ -196,12 +262,36 @@ describe("mobile routes and course interactions", () => {
         finish = () => resolve(Response.json({ code: 1, data: { authorized: false, authorizedAt: null } }));
       });
     });
-    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    fireEvent.click(screen.getByRole("link", { name: "重新进入应用" }));
     await waitFor(() => expect(finish).toBeTypeOf("function"));
     expect(callsTo("course-schedules")).toBe(schedules);
     finish!();
     await screen.findByText("请在 App 内完成授权");
+    expect(callsTo("/authorization")).toBeGreaterThan(checks);
     expect(callsTo("course-schedules")).toBe(schedules);
+  });
+
+  it("keeps an authorization failure across app routes until manually retried", async () => {
+    const original = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input).endsWith("/authorization"))
+        return Promise.resolve(Response.json({ code: 0, msg: "授权查询失败", data: null }, { status: 503 }));
+      return original(input, init);
+    });
+    mount("/app/account");
+    await screen.findByText("授权查询失败");
+    const checks = callsTo("/authorization");
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findByText("授权查询失败");
+    expect(callsTo("/authorization")).toBe(checks);
+    expect(callsTo("course-schedules")).toBe(0);
+    vi.mocked(fetch).mockImplementation(original);
+    fireEvent.click(screen.getByRole("button", { name: "重试" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBe(checks + 1);
+    fireEvent.click(screen.getByRole("link", { name: "我的" }));
+    await screen.findByText("已完成授权");
+    expect(callsTo("/authorization")).toBe(checks + 1);
   });
 
   it("does not reload courses when a manual authorization check confirms revocation", async () => {
