@@ -69,12 +69,33 @@ export function AccountPage() {
                 {authorization.error.message}
               </p>
             ) : (
-              <p className="flex items-center gap-2 text-sm">
-                <ShieldCheck size={18} aria-hidden="true" />
-                {authorization.data?.authorized
-                  ? "已完成授权"
-                  : "请在 App 内完成授权"}
-              </p>
+              <>
+                <p className="flex items-center gap-2 text-sm">
+                  <ShieldCheck
+                    size={18}
+                    aria-hidden="true"
+                    className={authorization.data?.authorized
+                      ? "authorization-icon-authorized"
+                      : "authorization-icon-unauthorized"}
+                  />
+                  {authorization.data?.authorized
+                    ? "已完成授权"
+                    : "请在 App 内完成授权"}
+                </p>
+                {!authorization.data?.authorized && (
+                  <div className="authorization-guide">
+                    <p>
+                      在 2.0.0 及以上版本的 APP 内，打开侧边栏，点击「设置」进入「账号资料」，在完成北航统一身份认证后，点击「BUAA ClassHopper 网页端」的授权网页端按钮，跟随引导完成权限开通。
+                    </p>
+                    <img
+                      src="/images/android-web-authorization.png"
+                      alt="APP 账号资料页面中的 BUAA ClassHopper 网页端授权入口"
+                      width={1080}
+                      height={2160}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </section>
           <Button

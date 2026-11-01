@@ -364,6 +364,28 @@
   border-bottom: 0.5px solid var(--border);
   padding: 24px 0;
 }
+.authorization-icon-authorized {
+  flex-shrink: 0;
+  color: var(--green-11);
+}
+.authorization-icon-unauthorized {
+  flex-shrink: 0;
+  color: var(--gray-11);
+}
+.authorization-guide {
+  margin-top: 16px;
+  color: var(--gray-11);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.authorization-guide img {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 16px auto 0;
+  object-fit: contain;
+}
 .announcement-list {
   padding: 0 20px;
 }
