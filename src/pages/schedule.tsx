@@ -39,25 +39,31 @@ export function SchedulePage() {
       />
       <Banner />
       <SessionGate>
-        <DaySchedule key={date} date={date} />
+        <ScheduleContent date={date} />
       </SessionGate>
     </>
   );
 }
-function DaySchedule({ date }: { date: string }) {
+function ScheduleContent({ date }: { date: string }) {
+  const authorization = useAuthorization();
+  return <DaySchedule key={date} date={date} authorization={authorization} />;
+}
+function DaySchedule({ date, authorization }: {
+  date: string;
+  authorization: ReturnType<typeof useAuthorization>;
+}) {
   const [selected, setSelected] = useState<{
     id: string;
     trigger: HTMLButtonElement;
   } | null>(null);
-  const { manager, profile } = useSession(),
-    authorization = useAuthorization();
+  const { manager, profile } = useSession();
   const query = useQuery({
     queryKey: scheduleKey(profile!.id, date),
     queryFn: ({ signal }) =>
       api<Schedule>(`/v1/iclass/course-schedules?date=${date}`, manager, {
         signal,
       }),
-    enabled: authorization.data?.authorized === true,
+    enabled: authorization.isSuccess && authorization.data.authorized && !authorization.isFetching,
     retry: false,
     staleTime: 15_000,
   });
@@ -100,11 +106,12 @@ function DaySchedule({ date }: { date: string }) {
     if (authError)
       return (
         <AuthorizationPrompt
-          refresh={() => {
-            void authorization.refetch();
-            void query.refetch();
+          refresh={async () => {
+            const result = await authorization.refetch();
+            if (result.isSuccess && result.data.authorized)
+              await query.refetch({ cancelRefetch: false });
           }}
-          busy={query.isFetching}
+          busy={authorization.isFetching || query.isFetching}
         />
       );
     return (
@@ -180,6 +187,7 @@ function DaySchedule({ date }: { date: string }) {
           key={selected.id}
           date={date}
           id={selected.id}
+          authorization={authorization}
           onClose={() => setSelected(null)}
           returnFocusTo={selected.trigger}
         />

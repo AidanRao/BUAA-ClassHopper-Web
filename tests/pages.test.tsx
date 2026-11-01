@@ -9,7 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "../src/App";
 import { SessionContext } from "../src/auth/context";
 import type { BrowserSession, SessionState } from "../src/auth/session";
@@ -82,6 +82,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  focusManager.setFocused(undefined);
+  onlineManager.setOnline(true);
   vi.unstubAllGlobals();
 });
 function LocationProbe() {
@@ -128,6 +130,104 @@ function mount(
   );
 }
 describe("mobile routes and course interactions", () => {
+  const callsTo = (path: string) => vi.mocked(fetch).mock.calls
+    .filter(([input]) => String(input).includes(path)).length;
+
+  it("reuses authorization across dates and course details", async () => {
+    mount("/app/schedule/2026-10-27");
+    await screen.findAllByText("矩阵理论与应用");
+    const checks = callsTo("/authorization");
+    expect(checks).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /2026-10-28 星期三/ }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("course-schedules?date=2026-10-28")).toBeGreaterThan(0);
+    await openCourse();
+    await waitFor(() => expect(screen.getByRole("button", { name: "立即签到" }).hasAttribute("disabled")).toBe(false));
+    expect(callsTo("/authorization")).toBe(checks);
+  });
+
+  it("keeps an unauthorized result while changing dates, focusing and reconnecting until manual refresh", async () => {
+    authorized = false;
+    mount("/app/schedule/2026-10-27");
+    const refresh = await screen.findByRole("button", { name: "刷新状态" });
+    await waitFor(() => expect(refresh.hasAttribute("disabled")).toBe(false));
+    const checks = callsTo("/authorization");
+    fireEvent.click(screen.getByRole("button", { name: /2026-10-28 星期三/ }));
+    fireEvent.click(screen.getByRole("button", { name: "下一周" }));
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+    onlineManager.setOnline(false);
+    onlineManager.setOnline(true);
+    await waitFor(() => expect(screen.getByRole("button", { name: "刷新状态" }).hasAttribute("disabled")).toBe(false));
+    expect(callsTo("/authorization")).toBe(checks);
+    expect(callsTo("course-schedules")).toBe(0);
+    authorized = true;
+    fireEvent.click(screen.getByRole("button", { name: "刷新状态" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBe(checks + 1);
+    expect(callsTo("course-schedules?date=2026-11-04")).toBeGreaterThan(0);
+  });
+
+  it("checks authorization again when returning to the schedule page", async () => {
+    authorized = false;
+    mount("/app/schedule/2026-10-27");
+    await screen.findByText("请在 App 内完成授权");
+    const checks = callsTo("/authorization");
+    fireEvent.click(screen.getByRole("link", { name: "公告" }));
+    await screen.findByText("暂时无法加载");
+    authorized = true;
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await screen.findAllByText("矩阵理论与应用");
+    expect(callsTo("/authorization")).toBeGreaterThan(checks);
+  });
+
+  it("waits for a fresh authorization check before querying a previously authorized page", async () => {
+    mount("/app/schedule/2026-10-27");
+    await screen.findAllByText("矩阵理论与应用");
+    fireEvent.click(screen.getByRole("link", { name: "公告" }));
+    await screen.findByText("暂时无法加载");
+    const schedules = callsTo("course-schedules");
+    authorized = false;
+    const original = vi.mocked(fetch).getMockImplementation()!;
+    let finish: (() => void) | undefined;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (!String(input).endsWith("/authorization")) return original(input, init);
+      return new Promise<Response>((resolve) => {
+        finish = () => resolve(Response.json({ code: 1, data: { authorized: false, authorizedAt: null } }));
+      });
+    });
+    fireEvent.click(screen.getByRole("link", { name: "课表" }));
+    await waitFor(() => expect(finish).toBeTypeOf("function"));
+    expect(callsTo("course-schedules")).toBe(schedules);
+    finish!();
+    await screen.findByText("请在 App 内完成授权");
+    expect(callsTo("course-schedules")).toBe(schedules);
+  });
+
+  it("does not reload courses when a manual authorization check confirms revocation", async () => {
+    mount("/app/schedule/2026-10-27");
+    await screen.findAllByText("矩阵理论与应用");
+    const original = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input).includes("course-schedules"))
+        return Promise.resolve(Response.json({
+          code: 0,
+          msg: "请在 App 内完成授权",
+          data: { reason: "ICLASS_AUTHORIZATION_REQUIRED" },
+        }, { status: 403 }));
+      return original(input, init);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "刷新课表" }));
+    const refresh = await screen.findByRole("button", { name: "刷新状态" });
+    const schedules = callsTo("course-schedules");
+    const checks = callsTo("/authorization");
+    authorized = false;
+    fireEvent.click(refresh);
+    await waitFor(() => expect(callsTo("/authorization")).toBe(checks + 1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "刷新状态" }).hasAttribute("disabled")).toBe(false));
+    expect(callsTo("course-schedules")).toBe(schedules);
+  });
+
   describe.each([
     [false, false, "未签到", "circle", "unsigned"],
     [false, true, "已预约", "calendar-check", "reserved"],

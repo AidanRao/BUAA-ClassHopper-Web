@@ -15,7 +15,10 @@ export function useAuthorization() {
     queryFn: ({ signal }) =>
       api<Authorization>("/v1/iclass/authorization", session.manager, { signal }),
     enabled: session.phase === "ready",
-    staleTime: 0,
+    staleTime: Infinity,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: false,
   });
 }

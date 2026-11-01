@@ -14,17 +14,17 @@ import {
   LoadingRows,
   Message,
 } from "@/components/feedback";
-import { scheduleKey, useAuthorization } from "@/lib/iclass";
+import { scheduleKey, type useAuthorization } from "@/lib/iclass";
 
-export function CourseDetailSheet({ date, id, onClose, returnFocusTo }: {
+export function CourseDetailSheet({ date, id, authorization, onClose, returnFocusTo }: {
   date: string;
   id: string;
+  authorization: ReturnType<typeof useAuthorization>;
   onClose: () => void;
   returnFocusTo: HTMLButtonElement;
 }) {
   const { manager, profile } = useSession();
   const client = useQueryClient();
-  const authorization = useAuthorization();
   const [confirm, setConfirm] = useState(false),
     [feedback, setFeedback] = useState("");
   const key = scheduleKey(profile!.id, date);
@@ -34,7 +34,7 @@ export function CourseDetailSheet({ date, id, onClose, returnFocusTo }: {
       api<Schedule>(`/v1/iclass/course-schedules?date=${date}`, manager, {
         signal,
       }),
-    enabled: authorization.data?.authorized === true,
+    enabled: authorization.isSuccess && authorization.data.authorized && !authorization.isFetching,
     staleTime: 0,
     retry: false,
   });
