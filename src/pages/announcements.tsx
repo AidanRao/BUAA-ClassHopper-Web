@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
-import { api, httpUrl } from "@/lib/api";
+import { api, ApiError, httpUrl } from "@/lib/api";
 import { today } from "@/lib/dates";
 import type { Announcement, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Failure, LoadingRows, Message } from "@/components/feedback";
+import { NotFound } from "@/components/not-found";
 export function AnnouncementsPage() {
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -121,6 +122,14 @@ export function AnnouncementDetailPage() {
     retry: false,
   });
   if (query.isPending) return <LoadingRows />;
+  if (query.error instanceof ApiError && query.error.status === 404)
+    return (
+      <NotFound
+        title="公告不存在"
+        to="/app/announcements"
+        action="返回公告"
+      />
+    );
   if (query.error)
     return (
       <Failure

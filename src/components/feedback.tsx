@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { CalendarDays, LockKeyhole, RefreshCw } from "lucide-react";
+import { LockKeyhole, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "./ui/button";
 import { useSession } from "@/auth/context";
@@ -71,7 +71,23 @@ export function Failure({
 export function LoginPrompt() {
   const location = useLocation();
   return (
-    <Message title="登录后查看课表" icon={<CalendarDays size={24} />}>
+    <Message
+      title="登录后查看课表"
+      icon={
+        <video
+          className="login-animation"
+          src="/videos/login-character.webm"
+          width={180}
+          height={180}
+          autoPlay
+          loop
+          muted
+          playsInline
+          disablePictureInPicture
+          aria-hidden="true"
+        />
+      }
+    >
       <Button asChild>
         <Link
           data-analytics-id="login"

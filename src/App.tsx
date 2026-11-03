@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import { ArrowLeft, CalendarDays, Megaphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Message } from "@/components/feedback";
+import { NotFound } from "@/components/not-found";
 import { AuthorizationProvider } from "@/auth/authorization-provider";
 import { SchedulePage } from "@/pages/schedule";
 const AnnouncementsPage = lazy(() =>
@@ -100,22 +100,14 @@ export function App() {
         <Route
           path="*"
           element={
-            <Message title="页面不存在">
-              <Button asChild>
-                <Link to="/app/schedule">返回课表</Link>
-              </Button>
-            </Message>
+            <NotFound to="/app/schedule" action="返回课表" />
           }
         />
       </Route>
       <Route
         path="*"
         element={
-          <Message title="页面不存在">
-            <Button asChild>
-              <Link to="/app">进入网页版</Link>
-            </Button>
-          </Message>
+          <main><NotFound /></main>
         }
       />
     </Routes>
