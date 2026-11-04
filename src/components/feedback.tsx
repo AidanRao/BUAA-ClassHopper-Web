@@ -3,19 +3,22 @@ import { LockKeyhole, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "./ui/button";
 import { useSession } from "@/auth/context";
+import { cn } from "@/lib/utils";
 export function Message({
   title,
   description,
   children,
   icon,
+  className,
 }: {
   title: string;
   description?: string;
   children?: ReactNode;
   icon?: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="message" aria-live="polite">
+    <section className={cn("message", className)} aria-live="polite">
       {icon && <div className="message-icon">{icon}</div>}
       <h2 className="text-lg font-medium">{title}</h2>
       {description && (
@@ -24,7 +27,7 @@ export function Message({
         </p>
       )}
       {children && (
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <div className="message-actions mt-5 flex flex-wrap justify-center gap-2">
           {children}
         </div>
       )}
@@ -72,6 +75,7 @@ export function LoginPrompt() {
   const location = useLocation();
   return (
     <Message
+      className="login-prompt"
       title="登录后查看课表"
       icon={
         <video
