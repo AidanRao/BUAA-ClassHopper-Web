@@ -80,7 +80,7 @@ export function LoginPrompt() {
       icon={
         <video
           className="login-animation"
-          src="/videos/login-character.webm"
+          src="/videos/login-animation.mp4"
           width={180}
           height={180}
           autoPlay
