@@ -48,7 +48,7 @@ App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classho
 
 ## 广告
 
-在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，格式为 `banner`，并配置素材、活动与投放。页面取第一条投放展示在周历下方，无数据、接口失败或图片失败时不占位。不添加开屏或广告专用事件；可交互广告链接参与通用点击统计。图片与目标链接仅使用 HTTP/HTTPS，不执行 App scheme 或危险协议。
+在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，并配置图片素材、活动与投放。周历下方支持 `banner`（展示首条投放）和 `carousel`（按接口顺序每 6 秒切换，手动切换后等待 10 秒再播放下一张）。`showAdLabel` 按投放控制「广告」角标，缺省时显示。图片加载失败时跳过该素材，无可用图片时隐藏广告位。图片与目标链接仅使用 HTTP/HTTPS。可交互广告链接参与通用点击统计。
 
 ## 使用统计
 

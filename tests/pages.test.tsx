@@ -29,6 +29,7 @@ const course = {
   classEndTime: "2026-10-27 10:35:00",
 };
 let authorized: boolean, signed: boolean, reserved: boolean;
+let adDelivery: unknown;
 const beginLogin = vi.fn<BrowserSession["begin"]>();
 const logout = vi.fn<BrowserSession["logout"]>();
 const posts: Record<string, unknown>[] = [];
@@ -37,6 +38,7 @@ beforeEach(() => {
   authorized = true;
   signed = false;
   reserved = false;
+  adDelivery = { format: "banner", items: [] };
   posts.length = 0;
   beginLogin.mockReset().mockResolvedValue(undefined);
   logout.mockReset();
@@ -45,6 +47,8 @@ beforeEach(() => {
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const path = String(input);
+      if (path.endsWith("/ads/slots/web-schedule-banner"))
+        return Response.json({ code: 1, data: adDelivery });
       if (path.endsWith("/authorization"))
         return Response.json({
           code: 1,
@@ -148,6 +152,106 @@ function mount(
 describe("mobile routes and course interactions", () => {
   const callsTo = (path: string) => vi.mocked(fetch).mock.calls
     .filter(([input]) => String(input).includes(path)).length;
+
+  it("updates the carousel dots and ad label when switching placements", async () => {
+    const surveyUrl = "https://example.com/survey";
+    const announcementUrl = "https://example.com/app/announcements/announcement";
+    adDelivery = {
+      format: "carousel",
+      items: [
+        {
+          placementId: "survey",
+          showAdLabel: true,
+          targetUrl: surveyUrl,
+          content: { imageUrl: "https://example.com/survey.png", title: "满意度调查" },
+        },
+        {
+          placementId: "announcement",
+          showAdLabel: false,
+          targetUrl: announcementUrl,
+          content: { imageUrl: "https://example.com/announcement.png", title: "" },
+        },
+      ],
+    };
+
+    mount("/app/schedule/2026-10-27");
+    const banner = within(await screen.findByRole("complementary", { name: "广告" }));
+    expect(banner.getByRole("img", { name: "满意度调查" }).getAttribute("src"))
+      .toBe("https://example.com/survey.png");
+    expect(banner.getByRole("link").getAttribute("href")).toBe(surveyUrl);
+    expect(banner.getByText("广告")).toBeTruthy();
+    expect(banner.getAllByRole("button")).toHaveLength(2);
+    const indicators = banner.getByRole("group", { name: "第 1 张，共 2 张" });
+    const dots = Array.from(indicators.querySelectorAll(".banner-dot"));
+    expect(dots.map((dot) => dot.getAttribute("data-current"))).toEqual(["true", "false"]);
+
+    fireEvent.click(banner.getByRole("button", { name: "下一张广告" }));
+    expect(banner.getByRole("img", { name: "广告" }).getAttribute("src"))
+      .toBe("https://example.com/announcement.png");
+    expect(banner.getByRole("link").getAttribute("href")).toBe(announcementUrl);
+    expect(banner.queryByText("广告")).toBeNull();
+    expect(banner.getByRole("group", { name: "第 2 张，共 2 张" })).toBe(indicators);
+    expect(dots.map((dot) => dot.getAttribute("data-current"))).toEqual(["false", "true"]);
+
+    fireEvent.click(banner.getByRole("button", { name: "上一张广告" }));
+    expect(banner.getByRole("link").getAttribute("href")).toBe(surveyUrl);
+    fireEvent.error(banner.getByRole("img"));
+    expect(banner.getByRole("link").getAttribute("href")).toBe(announcementUrl);
+    expect(banner.queryByRole("button")).toBeNull();
+    expect(banner.queryByRole("group")).toBeNull();
+    fireEvent.error(banner.getByRole("img"));
+    expect(screen.queryByRole("complementary", { name: "广告" })).toBeNull();
+  });
+
+  it("resumes automatic rotation ten seconds after the most recent manual switch", async () => {
+    adDelivery = {
+      format: "carousel",
+      items: ["survey", "announcement"].map((placementId) => ({
+        placementId,
+        targetUrl: null,
+        content: { imageUrl: `https://example.com/${placementId}.png`, title: placementId },
+      })),
+    };
+
+    vi.useFakeTimers();
+    try {
+      mount("/app/schedule/2026-10-27");
+      const banner = within(await vi.waitFor(() => screen.getByRole("complementary", { name: "广告" })));
+      const next = banner.getByRole("button", { name: "下一张广告" });
+      fireEvent.click(next);
+      act(() => vi.advanceTimersByTime(7_000));
+      expect(banner.getByRole("img", { name: "announcement" })).toBeTruthy();
+
+      fireEvent.click(next);
+      act(() => vi.advanceTimersByTime(9_999));
+      expect(banner.getByRole("img", { name: "survey" })).toBeTruthy();
+
+      act(() => vi.advanceTimersByTime(1));
+      expect(banner.getByRole("img", { name: "announcement" })).toBeTruthy();
+      act(() => vi.advanceTimersByTime(6_000));
+      expect(banner.getByRole("img", { name: "survey" })).toBeTruthy();
+    } finally {
+      cleanup();
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps showing a single banner and defaults to displaying its ad label", async () => {
+    adDelivery = {
+      format: "banner",
+      items: [{
+        placementId: "survey",
+        targetUrl: null,
+        content: { imageUrl: "https://example.com/survey.png", title: "满意度调查" },
+      }],
+    };
+
+    mount("/app/schedule/2026-10-27");
+    const banner = within(await screen.findByRole("complementary", { name: "广告" }));
+    expect(banner.getByRole("img", { name: "满意度调查" })).toBeTruthy();
+    expect(banner.getByText("广告")).toBeTruthy();
+    expect(banner.queryByRole("button")).toBeNull();
+  });
 
   it("loads authorization after session restoration and reuses it across app routes", async () => {
     const view = mount("/app/account", "loading");

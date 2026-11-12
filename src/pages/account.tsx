@@ -85,13 +85,13 @@ export function AccountPage() {
                 {!authorization.data?.authorized && (
                   <div className="authorization-guide">
                     <p>
-                      在 2.0.0 及以上版本的 APP 内，打开侧边栏，点击「设置」进入「账号资料」，在完成北航统一身份认证后，点击「BUAA ClassHopper 网页端」的授权网页端按钮，跟随引导完成权限开通。
+                      在 1.6.0 及以上版本的 APP 内（灰度中），在底部栏点击「我的」进入「账号资料」，在完成北航统一身份认证后，点击「BUAA ClassHopper 网页端」的授权网页端按钮，跟随引导完成权限开通。
                     </p>
                     <img
                       src="/images/android-web-authorization.png"
                       alt="APP 账号资料页面中的 BUAA ClassHopper 网页端授权入口"
                       width={1080}
-                      height={2160}
+                      height={1962}
                     />
                   </div>
                 )}
