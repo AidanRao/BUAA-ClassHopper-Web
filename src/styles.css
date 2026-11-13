@@ -4,6 +4,8 @@
 @import "@radix-ui/colors/blue.css";
 @import "@radix-ui/colors/green.css";
 @import "@radix-ui/colors/red.css";
+@import "@radix-ui/colors/amber.css";
+@import "@radix-ui/colors/violet.css";
 :root {
   --background: var(--gray-1);
   --foreground: var(--gray-12);
@@ -73,8 +75,9 @@
   }
 }
 .app-shell {
+  --app-content-width: 480px;
   width: 100%;
-  max-width: 480px;
+  max-width: var(--app-content-width);
   min-height: 100dvh;
   margin: 0 auto;
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
@@ -89,7 +92,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: var(--app-content-width);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 0.5px solid var(--gray-6);
@@ -236,6 +239,50 @@
 .banner {
   position: relative;
   margin: 8px 16px 0;
+}
+.text-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-bottom: 0.5px solid var(--gray-6);
+  background: var(--text-banner-background, var(--gray-2));
+  color: var(--text-banner-color, var(--gray-12));
+  font-size: 14px;
+  line-height: 20px;
+}
+a.text-banner-row:hover {
+  background: var(--text-banner-hover, var(--gray-3));
+}
+a.text-banner-row:focus-visible {
+  outline: 2px solid var(--blue-8);
+  outline-offset: -2px;
+}
+.text-banner-label {
+  flex: none;
+  padding: 0 3px;
+  border: 0.5px solid var(--gray-6);
+  border-radius: 2px;
+  color: var(--text-banner-color, var(--gray-11));
+  font-size: 12px;
+  line-height: 16px;
+}
+.text-banner-copy {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.text-banner-action {
+  max-width: 40%;
+  color: var(--text-banner-color, var(--blue-11));
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.text-banner-arrow {
+  flex: none;
+  color: var(--text-banner-color, var(--blue-11));
 }
 .banner-surface {
   position: relative;

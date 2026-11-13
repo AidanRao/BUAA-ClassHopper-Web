@@ -47,7 +47,7 @@ export async function handleProxy(
   const token = path === "/oauth/token",
     userinfo = path === "/oauth/userinfo";
   const anonymous = new RegExp(
-    `^${base}/(?:announcement(?:/[^/]+)?|ads/slots/web-schedule-banner)$`,
+    `^${base}/(?:announcement(?:/[^/]+)?|ads/slots/web-schedule-(?:text-)?banner)$`,
   ).test(path);
   const authorization = path === `${base}/v1/iclass/authorization`;
   const schedules = path === `${base}/v1/iclass/course-schedules`;

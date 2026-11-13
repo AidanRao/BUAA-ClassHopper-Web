@@ -11,6 +11,7 @@ import {
 import { ArrowLeft, CalendarDays, Megaphone, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/not-found";
+import { TextBanner } from "@/components/text-banner";
 import { AuthorizationProvider } from "@/auth/authorization-provider";
 import { SchedulePage } from "@/pages/schedule";
 const AnnouncementsPage = lazy(() =>
@@ -45,16 +46,17 @@ function Layout() {
   }, [location.pathname, title]);
   return (
     <div className="app-shell">
-      {announcement && (
-        <div className="detail-navigation">
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/app/announcements" aria-label="返回" data-analytics-id="back-to-announcements">
-              <ArrowLeft size={20} />
-            </Link>
-          </Button>
-        </div>
-      )}
       <main id="main">
+        <TextBanner />
+        {announcement && (
+          <div className="detail-navigation">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/app/announcements" aria-label="返回" data-analytics-id="back-to-announcements">
+                <ArrowLeft size={20} />
+              </Link>
+            </Button>
+          </div>
+        )}
         <Suspense
           fallback={
             <p className="p-6 text-sm text-muted-foreground" role="status">

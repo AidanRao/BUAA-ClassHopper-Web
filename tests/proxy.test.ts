@@ -29,6 +29,7 @@ describe("fixed upstream same-origin proxy", () => {
     for (const path of [
       "/api/buaa-classhopper/announcement?page=2",
       "/api/buaa-classhopper/ads/slots/web-schedule-banner",
+      "/api/buaa-classhopper/ads/slots/web-schedule-text-banner",
     ]) {
       const result = await handleProxy(
         request(path, {
@@ -46,6 +47,12 @@ describe("fixed upstream same-origin proxy", () => {
     expect(sent[0].url).toBe(
       "https://api.example.com/api/buaa-classhopper/announcement?page=2",
     );
+  });
+  it("only allows GET on the exact text ad slot path", async () => {
+    const path = "/api/buaa-classhopper/ads/slots/web-schedule-text-banner";
+    expect((await handleProxy(request(path, { method: "POST" }), env))?.status).toBe(405);
+    expect((await handleProxy(request(`${path}-extra`), env))?.status).toBe(404);
+    expect(sent).toHaveLength(0);
   });
   it("forwards only user Bearer to personal endpoints and blocks unknown routes/methods", async () => {
     await handleProxy(

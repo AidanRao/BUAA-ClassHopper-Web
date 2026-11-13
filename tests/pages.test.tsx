@@ -30,6 +30,7 @@ const course = {
 };
 let authorized: boolean, signed: boolean, reserved: boolean;
 let adDelivery: unknown;
+let textAdDelivery: unknown;
 const beginLogin = vi.fn<BrowserSession["begin"]>();
 const logout = vi.fn<BrowserSession["logout"]>();
 const posts: Record<string, unknown>[] = [];
@@ -39,6 +40,7 @@ beforeEach(() => {
   signed = false;
   reserved = false;
   adDelivery = { format: "banner", items: [] };
+  textAdDelivery = { format: "banner", items: [] };
   posts.length = 0;
   beginLogin.mockReset().mockResolvedValue(undefined);
   logout.mockReset();
@@ -49,6 +51,10 @@ beforeEach(() => {
       const path = String(input);
       if (path.endsWith("/ads/slots/web-schedule-banner"))
         return Response.json({ code: 1, data: adDelivery });
+      if (path.endsWith("/ads/slots/web-schedule-text-banner"))
+        return textAdDelivery === null
+          ? Response.json({ code: 0, data: null }, { status: 404 })
+          : Response.json({ code: 1, data: textAdDelivery });
       if (path.endsWith("/authorization"))
         return Response.json({
           code: 1,
@@ -152,6 +158,70 @@ function mount(
 describe("mobile routes and course interactions", () => {
   const callsTo = (path: string) => vi.mocked(fetch).mock.calls
     .filter(([input]) => String(input).includes(path)).length;
+
+  it.each([
+    { targetUrl: "https://example.com/survey", buttonText: "参与问卷", showAdLabel: true },
+    { targetUrl: "https://example.com/survey", buttonText: "", showAdLabel: false },
+    { targetUrl: null, buttonText: "参与问卷", showAdLabel: true },
+    { targetUrl: "buaa-classhopper://announcement/1", buttonText: "参与问卷", showAdLabel: true },
+  ])("renders a text banner at the top of the schedule ($targetUrl, $buttonText)", async ({ targetUrl, buttonText, showAdLabel }) => {
+    adDelivery = { format: "banner", items: [{
+      placementId: "photo", targetUrl: null,
+      content: { imageUrl: "https://example.com/survey.png", title: "图片广告" },
+    }] };
+    textAdDelivery = { format: "banner", items: [{
+      targetUrl, showAdLabel, content: { presentation: "text", title: "填写满意度调查", buttonText },
+    }] };
+    mount("/app/schedule/2026-10-27");
+
+    const region = await screen.findByRole("complementary", { name: "文字广告" });
+    const banner = within(region);
+    expect(screen.getByRole("main").firstElementChild).toBe(region);
+    const calendar = screen.getByRole("region", { name: "课表日期" });
+    expect(region.nextElementSibling).toBe(calendar);
+    const photo = await screen.findByRole("img", { name: "图片广告" });
+    expect(calendar.compareDocumentPosition(photo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(banner.getByText("填写满意度调查")).toBeTruthy();
+    expect(!!banner.queryByText("广告")).toBe(showAdLabel);
+    expect(banner.queryByRole("img")).toBeNull();
+    expect(banner.queryByRole("button")).toBeNull();
+    if (targetUrl?.startsWith("https:")) {
+      const link = banner.getByRole("link", { name: /填写满意度调查/ });
+      expect(link.getAttribute("href")).toBe(targetUrl);
+      expect(link.tabIndex).toBe(0);
+      expect(link.querySelector("svg") !== null).toBe(!buttonText);
+      if (buttonText) expect(within(link).getByText(buttonText)).toBeTruthy();
+    } else {
+      expect(banner.queryByRole("link")).toBeNull();
+      expect(banner.queryByText(buttonText)).toBeNull();
+      expect(region.querySelector("svg")).toBeNull();
+    }
+  });
+
+  it.each([null, { format: "banner", items: [] }])("keeps the photo ad visible when the text slot is unavailable (%j)", async (response) => {
+    textAdDelivery = response;
+    adDelivery = { format: "banner", items: [{
+      placementId: "photo", targetUrl: null,
+      content: { imageUrl: "https://example.com/survey.png", title: "图片广告" },
+    }] };
+    mount("/app/schedule/2026-10-27");
+    expect(await screen.findByRole("img", { name: "图片广告" })).toBeTruthy();
+    expect(callsTo("/ads/slots/web-schedule-text-banner")).toBeGreaterThan(0);
+    expect(screen.queryByRole("complementary", { name: "文字广告" })).toBeNull();
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByRole("region", { name: "课表日期" }));
+  });
+
+  it("uses configured Radix colors and ignores unknown color values", async () => {
+    textAdDelivery = { format: "banner", items: [{
+      targetUrl: null,
+      content: { presentation: "text", title: "课表体验调查", backgroundColor: "amber", textColor: "#fff" },
+    }] };
+    mount("/app/schedule/2026-10-27");
+    const row = (await screen.findByText("课表体验调查")).parentElement!;
+    expect(row.style.getPropertyValue("--text-banner-background")).toBe("var(--amber-2)");
+    expect(row.style.getPropertyValue("--text-banner-hover")).toBe("var(--amber-3)");
+    expect(row.style.getPropertyValue("--text-banner-color")).toBe("");
+  });
 
   it("updates the carousel dots and ad label when switching placements", async () => {
     const surveyUrl = "https://example.com/survey";

@@ -50,6 +50,8 @@ App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classho
 
 在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，并配置图片素材、活动与投放。周历下方支持 `banner`（展示首条投放）和 `carousel`（按接口顺序每 6 秒切换，手动切换后等待 10 秒再播放下一张）。`showAdLabel` 按投放控制「广告」角标，缺省时显示。图片加载失败时跳过该素材，无可用图片时隐藏广告位。图片与目标链接仅使用 HTTP/HTTPS。可交互广告链接参与通用点击统计。
 
+「Web 顶部文字横幅」使用独立的 `web-schedule-text-banner` 广告位，格式为 `banner`。创建「文字横幅」素材并配置投放后，`/app` 下的页面会在 App 内容区顶部显示等宽横幅，下方内容随之下移。填写 HTTP/HTTPS 点击地址后整条可点，右侧显示按钮文案或默认箭头。无有效投放时隐藏文字横幅。
+
 ## 使用统计
 
 使用锁定版本 `@aidanrao/event-analytics@0.2.0`，浏览器直接向 `https://events.aidanrao.top/v1/events` 上报。设置公开构建变量 `VITE_ANALYTICS_APP_ID` 后启用；为空或不符合 1–64 位字母、数字、下划线及连字符的 ID 时关闭。`appVersion` 来自本项目 `package.json`，不使用 SDK 版本。修改该变量后需要重新构建并部署；不要填入密钥或沿用 SDK 的示例 App ID。
