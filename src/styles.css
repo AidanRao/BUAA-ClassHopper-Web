@@ -253,7 +253,7 @@
   line-height: 20px;
 }
 a.text-banner-row:hover {
-  background: var(--text-banner-hover, var(--gray-3));
+  background: color-mix(in srgb, var(--text-banner-background, var(--gray-2)), var(--gray-12) 5%);
 }
 a.text-banner-row:focus-visible {
   outline: 2px solid var(--blue-8);

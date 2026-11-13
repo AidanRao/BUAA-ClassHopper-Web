@@ -214,16 +214,18 @@ describe("mobile routes and course interactions", () => {
     expect(screen.getByRole("main").firstElementChild).toBe(screen.getByRole("region", { name: "课表日期" }));
   });
 
-  it("uses configured Radix colors and ignores unknown color values", async () => {
+  it.each([
+    ["0xFFF4FBF6", "0x80193B2D", "#F4FBF6FF", "#193B2D80"],
+    ["blue", "#fff", "", ""],
+  ])("converts ARGB colors to CSS and ignores invalid values (%s, %s)", async (backgroundColor, textColor, background, color) => {
     textAdDelivery = { format: "banner", items: [{
       targetUrl: null,
-      content: { presentation: "text", title: "课表体验调查", backgroundColor: "amber", textColor: "#fff" },
+      content: { presentation: "text", title: "课表体验调查", backgroundColor, textColor },
     }] };
     mount("/app/schedule/2026-10-27");
     const row = (await screen.findByText("课表体验调查")).parentElement!;
-    expect(row.style.getPropertyValue("--text-banner-background")).toBe("var(--amber-2)");
-    expect(row.style.getPropertyValue("--text-banner-hover")).toBe("var(--amber-3)");
-    expect(row.style.getPropertyValue("--text-banner-color")).toBe("");
+    expect(row.style.getPropertyValue("--text-banner-background")).toBe(background);
+    expect(row.style.getPropertyValue("--text-banner-color")).toBe(color);
   });
 
   it.each(["/app/account", "/app/announcements", "/app/announcements/notice"])("shows the text banner first on %s", async (path) => {

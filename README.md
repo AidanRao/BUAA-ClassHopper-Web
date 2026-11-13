@@ -50,7 +50,7 @@ App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classho
 
 在 API Platform 的 `buaa-classhopper` 下创建 `web-schedule-banner`，并配置图片素材、活动与投放。周历下方支持 `banner`（展示首条投放）和 `carousel`（按接口顺序每 6 秒切换，手动切换后等待 10 秒再播放下一张）。`showAdLabel` 按投放控制「广告」角标，缺省时显示。图片加载失败时跳过该素材，无可用图片时隐藏广告位。图片与目标链接仅使用 HTTP/HTTPS。可交互广告链接参与通用点击统计。
 
-「Web 顶部文字横幅」使用独立的 `web-app-text-banner` 广告位，格式为 `banner`。创建「文字横幅」素材并配置投放后，`/app` 下的页面会在 App 内容区顶部显示等宽横幅，下方内容随之下移。填写 HTTP/HTTPS 点击地址后整条可点，右侧显示按钮文案或默认箭头。无有效投放时隐藏文字横幅。
+「Web 顶部文字横幅」使用独立的 `web-app-text-banner` 广告位，格式为 `banner`。创建「文字横幅」素材并配置投放后，`/app` 下的页面会在 App 内容区顶部显示等宽横幅，下方内容随之下移。填写 HTTP/HTTPS 点击地址后整条可点，右侧显示按钮文案或默认箭头。无有效投放时隐藏文字横幅。`backgroundColor` 和 `textColor` 接收 `0xAARRGGBB` 字符串，例如 `"0xFFF4FBF6"`。
 
 ## 使用统计
 

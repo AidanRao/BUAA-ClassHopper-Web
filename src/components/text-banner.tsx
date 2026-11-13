@@ -18,10 +18,9 @@ interface TextBannerDelivery {
   }[];
 }
 
-const colors = new Set(["gray", "blue", "green", "amber", "red", "violet"]);
-
-function radixColor(value: string | undefined, step: number) {
-  return value && colors.has(value) ? `var(--${value}-${step})` : undefined;
+function bannerColorToCss(value: string | undefined) {
+  if (!value || value.length !== 10 || !/^0x[0-9A-F]{8}$/.test(value)) return undefined;
+  return `#${value.slice(4)}${value.slice(2, 4)}`;
 }
 
 export function TextBanner() {
@@ -41,9 +40,8 @@ export function TextBanner() {
   const target = httpUrl(item.targetUrl);
   const buttonText = item.content.buttonText?.trim();
   const style = {
-    "--text-banner-background": radixColor(item.content.backgroundColor, 2),
-    "--text-banner-hover": radixColor(item.content.backgroundColor, 3),
-    "--text-banner-color": radixColor(item.content.textColor, 12),
+    "--text-banner-background": bannerColorToCss(item.content.backgroundColor),
+    "--text-banner-color": bannerColorToCss(item.content.textColor),
   } as CSSProperties;
   const body = (
     <>
