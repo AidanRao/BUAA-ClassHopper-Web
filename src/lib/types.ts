@@ -17,10 +17,13 @@ export interface Schedule {
   serverTime: string;
   items: Course[];
 }
-export interface Authorization {
-  authorized: boolean;
-  authorizedAt: string | null;
-}
+export type Authorization =
+  | {
+      authorized: true;
+      authorizedAt: string;
+      identity: { studentName: string; studentId: string; academyName: string | null };
+    }
+  | { authorized: false; authorizedAt: null; identity: null };
 export interface Announcement {
   id: string;
   title: string;

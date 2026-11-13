@@ -42,7 +42,7 @@ npm run dev
 
 登录需要浏览器支持 Web Crypto、Web Locks、localStorage 和 sessionStorage，跨标签页状态通过 BroadcastChannel 同步。Access Token 只放内存；Refresh Token 存在 `classhopper.session.v1`，会串行轮换；state、PKCE verifier 和站内返回地址只放 sessionStorage。明确拒绝刷新时退出，网络故障保留 Refresh Token。点击退出登录时先清除本站凭据和用户缓存，再前往 SSO 的 `/logout` 页面；用户在 SSO 确认退出后，由 SSO 注销全局会话。此流程与 Android 版一致，不撤销 iClass 授权。
 
-App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classhopper/v1/iclass/authorization`，body 为 `{ loginName }`，身份取 SSO JWT sub。Web 不提供输入 loginName 的入口。授权凭据在 **API Platform KV 内直接保存**，不会返回 Web；KV 更新与撤销存在跨节点传播延迟。
+App 必须在用户明确授权后调用 API Platform 的 `PUT /api/buaa-classhopper/v1/iclass/authorization`，请求体为 `{ loginName }`。API Platform 使用 iClass 登录响应获取姓名、学号和学院，随授权凭据和授权时间按 SSO JWT sub 保存到 KV。Web 通过 `GET /v1/iclass/authorization` 获取授权状态和 `identity`，在账号页展示北航身份。API 仅在服务端使用 `loginName`。KV 更新与撤销存在跨节点传播延迟。
 
 签到前由 API Platform 再次核对该用户对应日期的课表。正常签到时段为北京时间课前 10 分钟到课程结束，时段外需要用户确认后尝试；结果不明先刷新课表，不自动重放 POST。
 

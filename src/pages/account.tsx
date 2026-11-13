@@ -82,6 +82,20 @@ export function AccountPage() {
                     ? "已完成授权"
                     : "请在 App 内完成授权"}
                 </p>
+                {authorization.data?.identity && (
+                  <dl aria-label="已授权的北航身份" className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 pl-[26px] text-sm">
+                    <dt className="text-muted-foreground">姓名</dt>
+                    <dd className="break-words">{authorization.data.identity.studentName}</dd>
+                    <dt className="text-muted-foreground">学号</dt>
+                    <dd className="break-words tabular-nums">{authorization.data.identity.studentId}</dd>
+                    {authorization.data.identity.academyName && (
+                      <>
+                        <dt className="text-muted-foreground">学院</dt>
+                        <dd className="break-words">{authorization.data.identity.academyName}</dd>
+                      </>
+                    )}
+                  </dl>
+                )}
                 {!authorization.data?.authorized && (
                   <div className="authorization-guide">
                     <p>

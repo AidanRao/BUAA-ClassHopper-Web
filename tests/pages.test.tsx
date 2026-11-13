@@ -28,6 +28,7 @@ const course = {
   classBeginTime: "2026-10-27 09:50:00",
   classEndTime: "2026-10-27 10:35:00",
 };
+const identity = { studentName: "张三", studentId: "00123456", academyName: "计算机学院" };
 let authorized: boolean, signed: boolean, reserved: boolean;
 let adDelivery: unknown;
 let textAdDelivery: unknown;
@@ -58,7 +59,9 @@ beforeEach(() => {
       if (path.endsWith("/authorization"))
         return Response.json({
           code: 1,
-          data: { authorized, authorizedAt: "2026-10-27T00:00:00Z" },
+          data: authorized
+            ? { authorized: true, authorizedAt: "2026-10-27T00:00:00Z", identity }
+            : { authorized: false, authorizedAt: null, identity: null },
         });
       if (path.includes("course-schedules"))
         return Response.json({
@@ -338,6 +341,10 @@ describe("mobile routes and course interactions", () => {
     expect(callsTo("/authorization")).toBe(0);
     act(() => view.setSession({ phase: "ready", profile: { id: "user-1" }, error: null }));
     await screen.findByText("已完成授权");
+    const authorizedIdentity = within(screen.getByLabelText("已授权的北航身份"));
+    expect(authorizedIdentity.getByText(identity.studentName)).toBeTruthy();
+    expect(authorizedIdentity.getByText(identity.studentId)).toBeTruthy();
+    expect(authorizedIdentity.getByText(identity.academyName)).toBeTruthy();
     const checks = callsTo("/authorization");
     expect(checks).toBe(1);
     fireEvent.click(screen.getByRole("link", { name: "课表" }));
@@ -345,10 +352,32 @@ describe("mobile routes and course interactions", () => {
     expect(callsTo("/authorization")).toBe(checks);
   });
 
+  it("hides the academy row when the authorized identity has no academy", async () => {
+    const original = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (!String(input).endsWith("/authorization")) return original(input, init);
+      return Promise.resolve(Response.json({
+        code: 1,
+        data: {
+          authorized: true,
+          authorizedAt: "2026-10-27T00:00:00Z",
+          identity: { ...identity, academyName: null },
+        },
+      }));
+    });
+    mount("/app/account");
+    const details = within(await screen.findByLabelText("已授权的北航身份"));
+    expect(details.getByText(identity.studentName)).toBeTruthy();
+    expect(details.getByText(identity.studentId)).toBeTruthy();
+    expect(details.queryByText("学院")).toBeNull();
+    expect(details.queryByText("未提供")).toBeNull();
+  });
+
   it("loads a separate authorization result after switching accounts", async () => {
     authorized = false;
     const view = mount("/app/account");
     await screen.findByText("请在 App 内完成授权");
+    expect(screen.queryByLabelText("已授权的北航身份")).toBeNull();
     const checks = callsTo("/authorization");
     authorized = true;
     act(() => view.setSession({ phase: "ready", profile: { id: "user-2" }, error: null }));
@@ -443,7 +472,7 @@ describe("mobile routes and course interactions", () => {
     vi.mocked(fetch).mockImplementation((input, init) => {
       if (!String(input).endsWith("/authorization")) return original(input, init);
       return new Promise<Response>((resolve) => {
-        finish = () => resolve(Response.json({ code: 1, data: { authorized: false, authorizedAt: null } }));
+        finish = () => resolve(Response.json({ code: 1, data: { authorized: false, authorizedAt: null, identity: null } }));
       });
     });
     fireEvent.click(screen.getByRole("link", { name: "重新进入应用" }));
