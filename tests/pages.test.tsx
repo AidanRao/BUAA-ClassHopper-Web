@@ -189,7 +189,8 @@ describe("mobile routes and course interactions", () => {
     expect(banner.getByRole("img", { name: "广告" }).getAttribute("src"))
       .toBe("https://example.com/announcement.png");
     expect(banner.getByRole("link").getAttribute("href")).toBe(announcementUrl);
-    expect(banner.queryByText("广告")).toBeNull();
+    expect(within(banner.getByRole("link")).queryByText("广告")).toBeNull();
+    expect(banner.getByText("广告").closest("[inert]")?.getAttribute("aria-hidden")).toBe("true");
     expect(banner.getByRole("group", { name: "第 2 张，共 2 张" })).toBe(indicators);
     expect(dots.map((dot) => dot.getAttribute("data-current"))).toEqual(["false", "true"]);
 

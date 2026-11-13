@@ -13,6 +13,14 @@ interface Delivery {
   }[];
 }
 
+type SlideDirection = "next" | "previous";
+
+interface SlideSelection {
+  placementId: string;
+  previousPlacementId?: string;
+  direction?: SlideDirection;
+}
+
 const rotationIntervalMs = 6_000;
 const manualRotationDelayMs = 10_000;
 
@@ -24,13 +32,12 @@ export function Banner() {
     staleTime: 300_000,
     retry: false,
   });
-  const [activePlacementId, setActivePlacementId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<SlideSelection | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
   const [rotationEnabled] = useState(
     () => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
   );
   const [manualRotationDeadline, setManualRotationDeadline] = useState<number | null>(null);
-  const [loadedImage, setLoadedImage] = useState<string | null>(null);
   const [imageHovered, setImageHovered] = useState(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -46,12 +53,13 @@ export function Banner() {
   });
   const index = Math.max(
     0,
-    slides.findIndex(({ item }) => item.placementId === activePlacementId),
+    slides.findIndex(({ item }) => item.placementId === selection?.placementId),
   );
   const slide = slides[index];
   const hasMultipleSlides = slides.length > 1;
   const next = slides[index + 1] ?? slides[0];
   const nextPlacementId = next?.item.placementId;
+  const currentPlacementId = slide?.item.placementId;
 
   useEffect(() => {
     if (!hasMultipleSlides || !rotationEnabled || imageHovered || !nextPlacementId) return;
@@ -65,42 +73,44 @@ export function Banner() {
         return;
       }
       setManualRotationDeadline(null);
-      setActivePlacementId(nextPlacementId);
+      setSelection({
+        placementId: nextPlacementId,
+        previousPlacementId: currentPlacementId,
+        direction: "next",
+      });
     };
     let timer = window.setTimeout(rotate, delay);
     return () => window.clearTimeout(timer);
-  }, [hasMultipleSlides, rotationEnabled, imageHovered, nextPlacementId, manualRotationDeadline]);
+  }, [
+    hasMultipleSlides,
+    rotationEnabled,
+    imageHovered,
+    nextPlacementId,
+    currentPlacementId,
+    manualRotationDeadline,
+  ]);
 
   if (!slide) return null;
-  const { item, image } = slide;
   const previous = slides[index - 1] ?? slides[slides.length - 1];
-  const target = httpUrl(item.targetUrl);
+  const transition =
+    hasMultipleSlides && selection?.placementId === currentPlacementId
+      ? selection
+      : null;
 
-  function selectPlacement(placementId: string) {
+  function selectPlacement(placementId: string, direction: SlideDirection) {
     setManualRotationDeadline(Date.now() + manualRotationDelayMs);
-    setActivePlacementId(placementId);
+    setSelection({ placementId, previousPlacementId: currentPlacementId, direction });
   }
 
-  const media = (
-    <>
-      <img
-        key={image}
-        src={image}
-        alt={item.content.title || "广告"}
-        className="banner-image"
-        data-loaded={hasMultipleSlides ? loadedImage === image : undefined}
-        onLoad={() => setLoadedImage(image)}
-        onError={() => {
-          setFailedImages((failed) => new Set(failed).add(image));
-          const remaining = [...slides.slice(index + 1), ...slides.slice(0, index)];
-          const nextAvailable = remaining.find((candidate) => candidate.image !== image);
-          setActivePlacementId(nextAvailable?.item.placementId ?? null);
-        }}
-        referrerPolicy="no-referrer"
-      />
-      {item.showAdLabel !== false && <span className="ad-label">广告</span>}
-    </>
-  );
+  function discardImage(failedImage: string) {
+    setFailedImages((failed) => new Set(failed).add(failedImage));
+    if (slide?.image !== failedImage) return;
+
+    const remaining = [...slides.slice(index + 1), ...slides.slice(0, index)];
+    const nextAvailable = remaining.find(({ image }) => image !== failedImage);
+    setSelection(nextAvailable ? { placementId: nextAvailable.item.placementId } : null);
+  }
+
   return (
     <aside
       className="banner"
@@ -111,26 +121,57 @@ export function Banner() {
       }}
       onPointerLeave={() => setImageHovered(false)}
     >
-      {target ? (
-        <a
-          ref={linkRef}
-          className="banner-surface"
-          href={target}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {media}
-        </a>
-      ) : (
-        <div className="banner-surface">{media}</div>
-      )}
+      <div className="banner-surface" data-direction={transition?.direction}>
+        {slides.map(({ item, image }, position) => {
+          const isCurrent = position === index;
+          const isLeaving = transition?.previousPlacementId === item.placementId;
+          const target = httpUrl(item.targetUrl);
+          const media = (
+            <>
+              <img
+                key={image}
+                src={image}
+                alt={item.content.title || "广告"}
+                className="banner-image"
+                onError={() => discardImage(image)}
+                referrerPolicy="no-referrer"
+              />
+              {item.showAdLabel !== false && <span className="ad-label">广告</span>}
+            </>
+          );
+          const attributes = {
+            className: "banner-slide",
+            "data-current": isCurrent,
+            "data-leaving": isLeaving,
+            inert: !isCurrent,
+            "aria-hidden": !isCurrent || undefined,
+          };
+
+          return target ? (
+            <a
+              key={item.placementId}
+              {...attributes}
+              ref={isCurrent ? linkRef : undefined}
+              href={target}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {media}
+            </a>
+          ) : (
+            <div key={item.placementId} {...attributes}>
+              {media}
+            </div>
+          );
+        })}
+      </div>
       {hasMultipleSlides && (
         <>
           <button
             className="banner-arrow banner-arrow-previous"
             type="button"
             aria-label="上一张广告"
-            onClick={() => selectPlacement(previous.item.placementId)}
+            onClick={() => selectPlacement(previous.item.placementId, "previous")}
           >
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
@@ -138,7 +179,7 @@ export function Banner() {
             className="banner-arrow banner-arrow-next"
             type="button"
             aria-label="下一张广告"
-            onClick={() => selectPlacement(next.item.placementId)}
+            onClick={() => selectPlacement(next.item.placementId, "next")}
           >
             <ChevronRight size={16} aria-hidden="true" />
           </button>
