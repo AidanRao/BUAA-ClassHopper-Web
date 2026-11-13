@@ -51,7 +51,7 @@ beforeEach(() => {
       const path = String(input);
       if (path.endsWith("/ads/slots/web-schedule-banner"))
         return Response.json({ code: 1, data: adDelivery });
-      if (path.endsWith("/ads/slots/web-schedule-text-banner"))
+      if (path.endsWith("/ads/slots/web-app-text-banner"))
         return textAdDelivery === null
           ? Response.json({ code: 0, data: null }, { status: 404 })
           : Response.json({ code: 1, data: textAdDelivery });
@@ -206,7 +206,7 @@ describe("mobile routes and course interactions", () => {
     }] };
     mount("/app/schedule/2026-10-27");
     expect(await screen.findByRole("img", { name: "图片广告" })).toBeTruthy();
-    expect(callsTo("/ads/slots/web-schedule-text-banner")).toBeGreaterThan(0);
+    expect(callsTo("/ads/slots/web-app-text-banner")).toBeGreaterThan(0);
     expect(screen.queryByRole("complementary", { name: "文字广告" })).toBeNull();
     expect(screen.getByRole("main").firstElementChild).toBe(screen.getByRole("region", { name: "课表日期" }));
   });
@@ -221,6 +221,15 @@ describe("mobile routes and course interactions", () => {
     expect(row.style.getPropertyValue("--text-banner-background")).toBe("var(--amber-2)");
     expect(row.style.getPropertyValue("--text-banner-hover")).toBe("var(--amber-3)");
     expect(row.style.getPropertyValue("--text-banner-color")).toBe("");
+  });
+
+  it.each(["/app/account", "/app/announcements", "/app/announcements/notice"])("shows the text banner first on %s", async (path) => {
+    textAdDelivery = { format: "banner", items: [{
+      targetUrl: null, content: { presentation: "text", title: "网站通知" },
+    }] };
+    mount(path, "guest");
+    const region = await screen.findByRole("complementary", { name: "文字广告" });
+    expect(screen.getByRole("main").firstElementChild).toBe(region);
   });
 
   it("updates the carousel dots and ad label when switching placements", async () => {

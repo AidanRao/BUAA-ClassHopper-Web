@@ -28,7 +28,7 @@ export function TextBanner() {
   const { data, isError } = useQuery({
     queryKey: ["public", "app-text-banner"],
     queryFn: ({ signal }) =>
-      api<TextBannerDelivery>("/ads/slots/web-schedule-text-banner", undefined, { signal }),
+      api<TextBannerDelivery>("/ads/slots/web-app-text-banner", undefined, { signal }),
     staleTime: 300_000,
     retry: false,
   });
